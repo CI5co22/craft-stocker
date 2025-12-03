@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Material, InventoryContextType, DEFAULT_CATEGORIES } from '../types';
+import { storageService } from '../services/storage';
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
@@ -32,42 +33,55 @@ const INITIAL_DATA: Material[] = [
 
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Initialize state from LocalStorage or fallback to Initial Data
-  const [materials, setMaterials] = useState<Material[]>(() => {
-    try {
-      const saved = localStorage.getItem('craft-stocker-data');
-      return saved ? JSON.parse(saved) : INITIAL_DATA;
-    } catch (e) {
-      console.error("Error loading materials from storage", e);
-      return INITIAL_DATA;
-    }
-  });
+  const [materials, setMaterials] = useState<Material[]>(INITIAL_DATA);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [categories, setCategories] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('craft-stocker-categories');
-      return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
-    } catch (e) {
-      console.error("Error loading categories from storage", e);
-      return DEFAULT_CATEGORIES;
-    }
-  });
-
-  // Persist to LocalStorage whenever state changes
+  // Load from Vercel Blob on mount
   useEffect(() => {
-    try {
-      localStorage.setItem('craft-stocker-data', JSON.stringify(materials));
-    } catch (e) {
-      console.error("Failed to save materials", e);
+    async function loadData() {
+      try {
+        const data = await storageService.getInventory();
+        if (data) {
+          setMaterials(data.materials);
+          setCategories(data.categories);
+        } else {
+          // Fallback to localStorage if Blob is empty/error
+          const savedMaterials = localStorage.getItem('craft-stocker-data');
+          const savedCategories = localStorage.getItem('craft-stocker-categories');
+          if (savedMaterials) setMaterials(JSON.parse(savedMaterials));
+          if (savedCategories) setCategories(JSON.parse(savedCategories));
+        }
+      } catch (error) {
+        console.error('Failed to load inventory from cloud:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, [materials]);
+    loadData();
+  }, []);
 
+  // Save to Vercel Blob (and localStorage) whenever state changes
   useEffect(() => {
-    try {
-      localStorage.setItem('craft-stocker-categories', JSON.stringify(categories));
-    } catch (e) {
-      console.error("Failed to save categories", e);
-    }
-  }, [categories]);
+    if (isLoading) return; // Don't save initial empty state overwriting cloud data
+
+    const saveData = async () => {
+      try {
+        // Save to local storage immediately for offline capability
+        localStorage.setItem('craft-stocker-data', JSON.stringify(materials));
+        localStorage.setItem('craft-stocker-categories', JSON.stringify(categories));
+
+        // Save to cloud
+        await storageService.saveInventory({ materials, categories });
+      } catch (error) {
+        console.error('Failed to save inventory to cloud:', error);
+      }
+    };
+
+    // Debounce save to avoid too many API calls
+    const timeoutId = setTimeout(saveData, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [materials, categories, isLoading]);
 
   const addMaterial = (material: Omit<Material, 'id' | 'lastUpdated'>) => {
     const newMaterial: Material = {
@@ -79,19 +93,19 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const updateQuantity = (id: string, newQuantity: number) => {
-    setMaterials(prev => prev.map(m => 
+    setMaterials(prev => prev.map(m =>
       m.id === id ? { ...m, quantity: Math.max(0, newQuantity), lastUpdated: Date.now() } : m
     ));
   };
 
   const incrementQuantity = (id: string) => {
-    setMaterials(prev => prev.map(m => 
+    setMaterials(prev => prev.map(m =>
       m.id === id ? { ...m, quantity: m.quantity + 1, lastUpdated: Date.now() } : m
     ));
   };
 
   const decrementQuantity = (id: string) => {
-    setMaterials(prev => prev.map(m => 
+    setMaterials(prev => prev.map(m =>
       m.id === id ? { ...m, quantity: Math.max(0, m.quantity - 1), lastUpdated: Date.now() } : m
     ));
   };
@@ -111,13 +125,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   return (
-    <InventoryContext.Provider value={{ 
-      materials, 
+    <InventoryContext.Provider value={{
+      materials,
       categories,
-      addMaterial, 
-      updateQuantity, 
-      incrementQuantity, 
-      decrementQuantity, 
+      addMaterial,
+      updateQuantity,
+      incrementQuantity,
+      decrementQuantity,
       deleteMaterial,
       addCategory,
       deleteCategory
