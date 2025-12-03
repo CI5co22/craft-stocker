@@ -57,8 +57,8 @@ const Dashboard: React.FC = () => {
              <div className="bg-emerald-600 text-white p-1.5 rounded-lg shadow-sm">
                 <Package size={20} />
              </div>
-             <span className="font-bold text-xl tracking-tight hidden md:block text-slate-800">Craft Stocker</span>
-             <span className="font-bold text-xl tracking-tight md:hidden text-slate-800">CraftStocker</span>
+             <span className="font-bold text-xl tracking-tight hidden md:block text-slate-800">Karoo - Inventario</span>
+             <span className="font-bold text-xl tracking-tight md:hidden text-slate-800">Karoo</span>
           </div>
           
           <div className="flex items-center gap-3">
@@ -94,9 +94,6 @@ const Dashboard: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h1 className="text-2xl md:text-3xl font-bold mb-2">Panel de Control</h1>
-                    <p className="text-slate-300 text-sm md:text-base opacity-90 max-w-xl">
-                      Resumen general del inventario. Mantén tus suministros organizados y listos para usar.
-                    </p>
                   </div>
                 </div>
 
