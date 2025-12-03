@@ -1,33 +1,40 @@
-import { kv } from '@vercel/kv';
+import Redis from "ioredis";
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(request: VercelRequest, response: VercelResponse) {
-  if (request.method === 'GET') {
+const redis = new Redis(process.env.REDIS_URL!);
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method === "GET") {
     try {
-      const materials = await kv.get('materials');
-      const categories = await kv.get('categories');
-      
-      return response.status(200).json({ 
-        materials: materials || [], 
-        categories: categories || [] 
+      const materials = await redis.get("materials");
+      const categories = await redis.get("categories");
+
+      return res.status(200).json({
+        materials: materials ? JSON.parse(materials) : [],
+        categories: categories ? JSON.parse(categories) : [],
       });
-    } catch (error: any) {
-      return response.status(500).json({ error: 'Error reading from KV', details: error.message });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Redis GET error", details: err.message });
     }
   }
 
-  if (request.method === 'POST') {
+  if (req.method === "POST") {
     try {
-      const { materials, categories } = request.body;
+      const { materials, categories } = req.body;
 
-      if (materials) await kv.set('materials', materials);
-      if (categories) await kv.set('categories', categories);
+      if (materials) {
+        await redis.set("materials", JSON.stringify(materials));
+      }
 
-      return response.status(200).json({ success: true });
-    } catch (error: any) {
-      return response.status(500).json({ error: 'Error writing to KV', details: error.message });
+      if (categories) {
+        await redis.set("categories", JSON.stringify(categories));
+      }
+
+      return res.status(200).json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Redis SET error", details: err.message });
     }
   }
 
-  return response.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ error: "Method not allowed" });
 }
