@@ -12,31 +12,30 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState(true);
 
   // Cargar datos iniciales desde el servidor
-  useEffect(() => {
-    const initData = async () => {
-      setIsLoading(true);
-      const { materials: loadedMaterials, categories: loadedCategories } = await storageService.loadData();
-      
-      if (loadedMaterials) setMaterials(loadedMaterials);
-      if (loadedCategories) setCategories(loadedCategories);
-      
-      setIsLoading(false);
-    };
-
-    initData();
+  const refreshData = useCallback(async () => {
+    setIsLoading(true);
+    const { materials: loadedMaterials, categories: loadedCategories } = await storageService.loadData();
+    
+    if (loadedMaterials) setMaterials(loadedMaterials);
+    if (loadedCategories) setCategories(loadedCategories);
+    
+    setIsLoading(false);
   }, []);
 
-  // Persistencia: Guardar cambios cuando el estado cambia
-  // Usamos un debounce implícito o confiamos en que React no dispare esto excesivamente.
-  // En una app de producción real, usaríamos useDebounce para no saturar la API.
   useEffect(() => {
-    if (!isLoading) {
+    refreshData();
+  }, [refreshData]);
+
+  // Persistencia: Guardar cambios cuando el estado cambia
+  // IMPORTANTE: Solo guardamos si NO estamos cargando, para evitar sobrescribir con datos vacíos
+  useEffect(() => {
+    if (!isLoading && materials.length > 0) {
       storageService.saveMaterials(materials);
     }
   }, [materials, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && categories.length > 0) {
       storageService.saveCategories(categories);
     }
   }, [categories, isLoading]);
@@ -97,13 +96,15 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     <InventoryContext.Provider value={{ 
       materials, 
       categories,
+      isLoading,
       addMaterial, 
       updateQuantity, 
       incrementQuantity, 
       decrementQuantity, 
       deleteMaterial,
       addCategory,
-      deleteCategory
+      deleteCategory,
+      refreshData
     }}>
       {children}
     </InventoryContext.Provider>

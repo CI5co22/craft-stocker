@@ -1,12 +1,13 @@
+
 import React, { useState, useMemo } from 'react';
 import { InventoryProvider, useInventory } from './components/InventoryContext';
 import { MaterialCard } from './components/MaterialCard';
 import { AddMaterialModal } from './components/AddMaterialModal';
 import { CategoryManager } from './components/CategoryManager';
-import { Search, Plus, Package, Filter, Settings2, AlertTriangle, Layers, Box } from 'lucide-react';
+import { Search, Plus, Package, Filter, Settings2, AlertTriangle, Layers, Box, RefreshCw } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  const { materials, categories } = useInventory();
+  const { materials, categories, isLoading, refreshData } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,12 +60,24 @@ const Dashboard: React.FC = () => {
              <span className="font-bold text-xl tracking-tight hidden md:block text-slate-800">Craft Stocker</span>
              <span className="font-bold text-xl tracking-tight md:hidden text-slate-800">CraftStocker</span>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="md:hidden bg-emerald-600 text-white p-2 rounded-full shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
-          >
-            <Plus size={24} />
-          </button>
+          
+          <div className="flex items-center gap-3">
+             <button 
+                onClick={() => refreshData()}
+                disabled={isLoading}
+                className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all disabled:animate-spin disabled:opacity-50"
+                title="Actualizar datos"
+             >
+                <RefreshCw size={20} />
+             </button>
+
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="md:hidden bg-emerald-600 text-white p-2 rounded-full shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
+            >
+              <Plus size={24} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -78,10 +91,14 @@ const Dashboard: React.FC = () => {
              <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/30 rounded-full -ml-16 -mb-32 blur-3xl pointer-events-none"></div>
 
              <div className="relative z-10">
-                <h1 className="text-2xl md:text-3xl font-bold mb-2">Panel de Control</h1>
-                <p className="text-slate-300 text-sm md:text-base opacity-90 max-w-xl">
-                  Resumen general del inventario. Mantén tus suministros organizados y listos para usar.
-                </p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-bold mb-2">Panel de Control</h1>
+                    <p className="text-slate-300 text-sm md:text-base opacity-90 max-w-xl">
+                      Resumen general del inventario. Mantén tus suministros organizados y listos para usar.
+                    </p>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                   <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors">
@@ -174,7 +191,12 @@ const Dashboard: React.FC = () => {
 
           {/* Inventory Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMaterials.length > 0 ? (
+            {isLoading ? (
+               <div className="col-span-full py-20 text-center">
+                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                 <p className="text-slate-500">Cargando inventario...</p>
+               </div>
+            ) : filteredMaterials.length > 0 ? (
               filteredMaterials.map(material => (
                 <MaterialCard key={material.id} material={material} />
               ))

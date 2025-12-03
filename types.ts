@@ -31,6 +31,7 @@ export interface ChatMessage {
 export interface InventoryContextType {
   materials: Material[];
   categories: string[];
+  isLoading: boolean;
   addMaterial: (material: Omit<Material, 'id' | 'lastUpdated'>) => void;
   updateQuantity: (id: string, newQuantity: number) => void;
   incrementQuantity: (id: string) => void;
@@ -38,4 +39,5 @@ export interface InventoryContextType {
   deleteMaterial: (id: string) => void;
   addCategory: (name: string) => void;
   deleteCategory: (name: string) => void;
+  refreshData: () => Promise<void>;
 }
