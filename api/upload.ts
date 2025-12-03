@@ -1,31 +1,27 @@
 import { put } from '@vercel/blob';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export const config = {
-  runtime: 'edge',
+  api: {
+    bodyParser: false,
+  },
 };
 
-export default async function handler(request: Request) {
+export default async function handler(request: VercelRequest, response: VercelResponse) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return response.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const form = await request.formData();
-    const file = form.get('file') as File;
-    const filename = form.get('filename') as string || file.name;
-
-    if (!file) {
-      return new Response('No file provided', { status: 400 });
-    }
-
-    // Upload to Vercel Blob
-    const blob = await put(filename, file, {
+    const filename = (request.query.filename as string) || 'image.png';
+    
+    // Al deshabilitar bodyParser, request intercepte el stream directamente
+    const blob = await put(filename, request, {
       access: 'public',
     });
 
-    return Response.json(blob);
-  } catch (error) {
-    console.error('Upload error:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return response.status(200).json(blob);
+  } catch (error: any) {
+    return response.status(500).json({ error: 'Error uploading to Blob', details: error.message });
   }
 }

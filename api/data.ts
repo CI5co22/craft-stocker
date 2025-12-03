@@ -1,10 +1,9 @@
-
 import { kv } from '@vercel/kv';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(request, response) {
+export default async function handler(request: VercelRequest, response: VercelResponse) {
   if (request.method === 'GET') {
     try {
-      // Intentamos obtener los datos. Si no existen, devolvemos null para que el frontend use los valores por defecto.
       const materials = await kv.get('materials');
       const categories = await kv.get('categories');
       
@@ -12,7 +11,7 @@ export default async function handler(request, response) {
         materials: materials || [], 
         categories: categories || [] 
       });
-    } catch (error) {
+    } catch (error: any) {
       return response.status(500).json({ error: 'Error reading from KV', details: error.message });
     }
   }
@@ -21,12 +20,11 @@ export default async function handler(request, response) {
     try {
       const { materials, categories } = request.body;
 
-      // Guardamos los datos en KV
       if (materials) await kv.set('materials', materials);
       if (categories) await kv.set('categories', categories);
 
       return response.status(200).json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       return response.status(500).json({ error: 'Error writing to KV', details: error.message });
     }
   }

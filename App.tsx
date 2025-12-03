@@ -47,7 +47,7 @@ const Dashboard: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 flex flex-col">
       
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto md:p-6 space-y-6">
+      <main className="max-w-5xl mx-auto md:p-6 space-y-6 flex-grow w-full">
         
         {/* Inventory Summary Hero (Green/Gray Professional Theme) */}
         <section className="mt-4 md:mt-0 px-4 md:px-0">
@@ -194,6 +194,10 @@ const Dashboard: React.FC = () => {
           </div>
         </section>
       </main>
+
+      <footer className="py-8 text-center text-slate-400 text-sm font-medium">
+        By Arnold Ajcip and Gemini :)
+      </footer>
       
       <AddMaterialModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <CategoryManager isOpen={isCategoryManagerOpen} onClose={() => setIsCategoryManagerOpen(false)} />
