@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { InventoryProvider, useInventory } from './components/InventoryContext';
 import { MaterialCard } from './components/MaterialCard';
@@ -53,16 +52,16 @@ const Dashboard: React.FC = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-2 text-indigo-700">
-             <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-sm">
+          <div className="flex items-center gap-2 text-emerald-800">
+             <div className="bg-emerald-600 text-white p-1.5 rounded-lg shadow-sm">
                 <Package size={20} />
              </div>
-             <span className="font-bold text-xl tracking-tight hidden md:block">Craft Stocker</span>
-             <span className="font-bold text-xl tracking-tight md:hidden">CraftStocker</span>
+             <span className="font-bold text-xl tracking-tight hidden md:block text-slate-800">Craft Stocker</span>
+             <span className="font-bold text-xl tracking-tight md:hidden text-slate-800">CraftStocker</span>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="md:hidden bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 transition-all active:scale-95"
+            className="md:hidden bg-emerald-600 text-white p-2 rounded-full shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
           >
             <Plus size={24} />
           </button>
@@ -71,43 +70,43 @@ const Dashboard: React.FC = () => {
 
       <main className="max-w-5xl mx-auto md:p-6 space-y-6">
         
-        {/* Inventory Summary Hero (Replaces AI Chat but keeps design aesthetic) */}
+        {/* Inventory Summary Hero (Green/Gray Professional Theme) */}
         <section className="mt-4 md:mt-0 px-4 md:px-0">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-gradient-to-br from-slate-800 to-emerald-900 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-slate-700/50">
              {/* Decorative Elements */}
-             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-32 blur-3xl pointer-events-none"></div>
-             <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/20 rounded-full -ml-16 -mb-32 blur-3xl pointer-events-none"></div>
+             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full -mr-16 -mt-32 blur-3xl pointer-events-none"></div>
+             <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/30 rounded-full -ml-16 -mb-32 blur-3xl pointer-events-none"></div>
 
              <div className="relative z-10">
                 <h1 className="text-2xl md:text-3xl font-bold mb-2">Panel de Control</h1>
-                <p className="text-indigo-100 text-sm md:text-base opacity-90 max-w-xl">
-                  Bienvenido a tu sistema de organización. Aquí tienes un resumen rápido del estado de tu taller.
+                <p className="text-slate-300 text-sm md:text-base opacity-90 max-w-xl">
+                  Resumen general del inventario. Mantén tus suministros organizados y listos para usar.
                 </p>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                    <div className="flex items-center gap-2 mb-1 text-indigo-200 text-xs uppercase font-bold tracking-wider">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center gap-2 mb-1 text-emerald-200 text-xs uppercase font-bold tracking-wider">
                       <Box size={14} /> Total Items
                     </div>
                     <div className="text-2xl md:text-3xl font-bold">{materials.length}</div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                    <div className="flex items-center gap-2 mb-1 text-indigo-200 text-xs uppercase font-bold tracking-wider">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center gap-2 mb-1 text-emerald-200 text-xs uppercase font-bold tracking-wider">
                       <Layers size={14} /> Unidades
                     </div>
                     <div className="text-2xl md:text-3xl font-bold">{totalItems}</div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                    <div className="flex items-center gap-2 mb-1 text-indigo-200 text-xs uppercase font-bold tracking-wider">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center gap-2 mb-1 text-emerald-200 text-xs uppercase font-bold tracking-wider">
                       <Filter size={14} /> Categorías
                     </div>
                     <div className="text-2xl md:text-3xl font-bold">{categories.length}</div>
                   </div>
 
-                   <div className={`backdrop-blur-sm rounded-xl p-4 border ${lowStockCount > 0 ? 'bg-amber-500/20 border-amber-400/30' : 'bg-white/10 border-white/10'}`}>
-                    <div className={`flex items-center gap-2 mb-1 text-xs uppercase font-bold tracking-wider ${lowStockCount > 0 ? 'text-amber-200' : 'text-indigo-200'}`}>
+                   <div className={`backdrop-blur-sm rounded-xl p-4 border transition-colors ${lowStockCount > 0 ? 'bg-amber-500/20 border-amber-400/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                    <div className={`flex items-center gap-2 mb-1 text-xs uppercase font-bold tracking-wider ${lowStockCount > 0 ? 'text-amber-200' : 'text-emerald-200'}`}>
                       <AlertTriangle size={14} /> Stock Bajo
                     </div>
                     <div className={`text-2xl md:text-3xl font-bold ${lowStockCount > 0 ? 'text-amber-100' : 'text-white'}`}>{lowStockCount}</div>
@@ -131,7 +130,7 @@ const Dashboard: React.FC = () => {
                 <input 
                   type="text" 
                   placeholder="Buscar material..." 
-                  className="w-full sm:w-56 pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm shadow-sm"
+                  className="w-full sm:w-56 pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm shadow-sm placeholder:text-slate-400 text-slate-700"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -141,7 +140,7 @@ const Dashboard: React.FC = () => {
               <div className="relative">
                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                  <select 
-                    className="w-full sm:w-48 pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm appearance-none shadow-sm cursor-pointer"
+                    className="w-full sm:w-48 pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm appearance-none shadow-sm cursor-pointer text-slate-700"
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
                  >
@@ -165,7 +164,7 @@ const Dashboard: React.FC = () => {
               {/* Add Item Button (Desktop) */}
               <button 
                 onClick={() => setIsModalOpen(true)}
-                className="hidden md:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-all shadow-md shadow-indigo-200 active:scale-95"
+                className="hidden md:flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-medium transition-all shadow-md shadow-emerald-200/50 active:scale-95"
               >
                 <Plus size={18} />
                 Agregar
@@ -182,11 +181,11 @@ const Dashboard: React.FC = () => {
             ) : (
               <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200 flex flex-col items-center">
                 <Package size={48} className="mb-4 opacity-20" />
-                <p className="text-lg font-medium">No se encontraron materiales</p>
+                <p className="text-lg font-medium text-slate-600">No se encontraron materiales</p>
                 <p className="text-sm text-slate-400 max-w-xs mx-auto mt-1">Intenta ajustar los filtros o agrega un nuevo artículo a tu colección.</p>
                 <button 
                   onClick={() => { setSearchTerm(''); setLocationFilter(''); }} 
-                  className="text-indigo-600 hover:text-indigo-700 hover:underline mt-4 text-sm font-medium"
+                  className="text-emerald-600 hover:text-emerald-700 hover:underline mt-4 text-sm font-medium"
                 >
                     Limpiar filtros
                 </button>

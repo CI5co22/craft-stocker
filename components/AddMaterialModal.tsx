@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Material } from '../types';
 import { useInventory } from './InventoryContext';
@@ -70,8 +69,8 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-slate-100">
         <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
           <h2 className="text-lg font-bold text-slate-800">Agregar Material</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
@@ -85,7 +84,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
           <div className="flex gap-4 items-start">
              <div 
                onClick={() => fileInputRef.current?.click()}
-               className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 text-slate-400 overflow-hidden relative group"
+               className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 text-slate-400 overflow-hidden relative group"
              >
                 {formData.imageUrl ? (
                   <img src={formData.imageUrl} className="w-full h-full object-cover" alt="Vista previa" />
@@ -115,7 +114,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
                  <input 
                    required
                    type="text" 
-                   className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm placeholder:text-slate-400"
+                   className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm placeholder:text-slate-400 text-slate-800"
                    placeholder="ej. Papel Acuarela"
                    value={formData.name}
                    onChange={e => setFormData({...formData, name: e.target.value})}
@@ -124,7 +123,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
                <div>
                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Categoría</label>
                  <select 
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-white"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm bg-white text-slate-800"
                     value={formData.type}
                     onChange={e => setFormData({...formData, type: e.target.value})}
                   >
@@ -143,7 +142,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 required
                 type="text" 
                 list="location-suggestions"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm text-slate-800"
                 placeholder="ej. Caja A"
                 value={formData.location}
                 onChange={e => setFormData({...formData, location: e.target.value})}
@@ -161,7 +160,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     required
                     type="number" 
                     step="1"
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm text-slate-800"
                     value={formData.quantity}
                     onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})}
                   />
@@ -171,7 +170,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
                   <input 
                     required
                     type="text" 
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm text-slate-800"
                     placeholder="ej. pzas"
                     value={formData.unit}
                     onChange={e => setFormData({...formData, unit: e.target.value})}
@@ -183,7 +182,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
            <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Descripción (Opcional)</label>
             <textarea 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm text-slate-800"
               rows={2}
               placeholder="Detalles sobre color, marca o tamaño..."
               value={formData.description}
@@ -193,7 +192,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
           <button 
             type="submit" 
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-2 transition-all shadow-md shadow-indigo-200"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-2 transition-all shadow-md shadow-emerald-200/50"
           >
             <Save size={18} />
             Guardar Material
