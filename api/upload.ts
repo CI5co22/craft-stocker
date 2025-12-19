@@ -22,15 +22,19 @@ export default async function handler(request: VercelRequest, response: VercelRe
   }
 
   try {
-    const filename = (request.query.filename as string) || 'image.png';
+    const rawFilename = request.query.filename as string;
+    // Aseguramos que siempre haya un nombre de archivo válido
+    const filename = rawFilename && rawFilename !== 'undefined' ? rawFilename : `upload_${Date.now()}.jpg`;
     
     // Al deshabilitar bodyParser, request intercepta el stream directamente
     const blob = await put(filename, request, {
       access: 'public',
+      contentType: request.headers['content-type'] as string || 'image/jpeg',
     });
 
     return response.status(200).json(blob);
   } catch (error: any) {
+    console.error("Vercel Blob Upload Error:", error);
     return response.status(500).json({ error: 'Error uploading to Blob', details: error.message });
   }
 }
