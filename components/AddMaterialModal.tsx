@@ -27,7 +27,6 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
     imageUrl: ''
   });
 
-  // Set default category when modal opens or categories change
   useEffect(() => {
     if (isOpen && categories.length > 0 && !formData.type) {
       setFormData(prev => ({ ...prev, type: categories[0] }));
@@ -109,27 +108,27 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
-          <h2 className="text-lg font-bold text-slate-800">Agregar Material</h2>
-          <button onClick={handleClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm transition-opacity">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+        <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white">Agregar Material</h2>
+          <button onClick={handleClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 dark:text-slate-400">
             <X size={20} />
           </button>
         </div>
 
         {categories.length === 0 ? (
           <div className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-full flex items-center justify-center mx-auto">
               <AlertCircle size={32} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800">No hay categorías</h3>
-              <p className="text-slate-500 text-sm mt-1">Primero debes crear al menos una categoría en el panel de gestión (icono de engranaje).</p>
+              <h3 className="font-bold text-slate-800 dark:text-white">No hay categorías</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Primero debes crear al menos una categoría en el panel de gestión.</p>
             </div>
             <button 
               onClick={handleClose}
-              className="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm"
+              className="px-6 py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl font-bold text-sm"
             >
               Entendido
             </button>
@@ -139,14 +138,14 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
             <div className="flex gap-4 items-start">
               <div 
                 onClick={() => !isUploading && fileInputRef.current?.click()}
-                className={`w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 text-slate-400 overflow-hidden relative group ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 dark:bg-slate-800 text-slate-400 overflow-hidden relative group ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {tempImagePreview ? (
                   <img src={tempImagePreview} className="w-full h-full object-cover" alt="Vista previa" />
                 ) : (
                   <>
                     <Upload size={20} className="mb-1" />
-                    <span className="text-[10px] font-medium uppercase">Foto</span>
+                    <span className="text-[10px] font-medium uppercase text-center px-1">Foto</span>
                   </>
                 )}
                 {!isUploading && tempImagePreview && (
@@ -159,12 +158,12 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
               
               <div className="flex-1 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre</label>
-                  <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Nombre</label>
+                  <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Categoría</label>
-                  <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} disabled={isUploading}>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Categoría</label>
+                  <select className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} disabled={isUploading}>
                     {categories.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
@@ -173,14 +172,14 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="relative">
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ubicación</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Ubicación</label>
                 <div className="relative">
                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                    <input 
                     required 
                     type="text" 
                     autoComplete="off"
-                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" 
+                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" 
                     value={formData.location} 
                     onChange={e => {
                       setFormData({...formData, location: e.target.value});
@@ -193,16 +192,16 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 </div>
 
                 {showLocationSuggestions && filteredLocations.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="p-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sugerencias</div>
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-2 border-b border-slate-50 dark:border-slate-700 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sugerencias</div>
                     {filteredLocations.map((loc, i) => (
                       <button
                         key={i}
                         type="button"
                         onClick={() => handleSelectLocation(loc)}
-                        className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex items-center gap-2 group"
+                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors flex items-center gap-2 group"
                       >
-                        <MapPin size={12} className="text-slate-300 group-hover:text-emerald-500" />
+                        <MapPin size={12} className="text-slate-300 dark:text-slate-600 group-hover:text-emerald-500" />
                         {loc}
                       </button>
                     ))}
@@ -212,20 +211,20 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cant.</label>
-                  <input required type="number" step="any" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} disabled={isUploading} />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Cant.</label>
+                  <input required type="number" step="any" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} disabled={isUploading} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Unidad</label>
-                  <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Unidad</label>
+                  <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
                 </div>
               </div>
             </div>
 
             <div className="pt-2">
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Descripción / Notas</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Descripción / Notas</label>
               <textarea 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none min-h-[60px]" 
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none min-h-[60px]" 
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})} 
                 disabled={isUploading}

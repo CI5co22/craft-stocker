@@ -99,11 +99,11 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
-          <h2 className="text-lg font-bold text-slate-800">Editar Material</h2>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+        <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white">Editar Material</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 dark:text-slate-400">
             <X size={20} />
           </button>
         </div>
@@ -112,7 +112,7 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
           <div className="flex gap-4 items-start">
             <div 
               onClick={() => !isUploading && fileInputRef.current?.click()}
-              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 text-slate-400 overflow-hidden relative group"
+              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 dark:bg-slate-800 text-slate-400 overflow-hidden relative group"
             >
               {tempImagePreview ? (
                 <img src={tempImagePreview} className="w-full h-full object-cover" alt="Vista previa" />
@@ -130,15 +130,15 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
             
             <div className="flex-1 space-y-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nombre del Material</label>
-                <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Nombre del Material</label>
+                <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Categoría Actual</label>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Categoría Actual</label>
                 <div className="relative">
                   <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                   <select 
-                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none appearance-none" 
+                    className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none appearance-none" 
                     value={formData.type} 
                     onChange={e => setFormData({...formData, type: e.target.value})} 
                     disabled={isUploading}
@@ -151,16 +151,16 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-50 dark:border-slate-800">
             <div className="relative">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Ubicación física</label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Ubicación física</label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600" size={14} />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-500" size={14} />
                 <input 
                   required 
                   type="text" 
                   autoComplete="off"
-                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" 
+                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" 
                   value={formData.location} 
                   onChange={e => {
                     setFormData({...formData, location: e.target.value});
@@ -173,16 +173,16 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
               </div>
 
               {showLocationSuggestions && filteredLocations.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3">Existentes</div>
+                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-2 border-b border-slate-50 dark:border-slate-700 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3">Existentes</div>
                   {filteredLocations.map((loc, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => handleSelectLocation(loc)}
-                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex items-center gap-2 group"
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors flex items-center gap-2 group"
                     >
-                      <MapPin size={12} className="text-slate-300 group-hover:text-emerald-500" />
+                      <MapPin size={12} className="text-slate-300 dark:text-slate-600 group-hover:text-emerald-500" />
                       {loc}
                     </button>
                   ))}
@@ -191,20 +191,20 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cantidad</label>
-                <input required type="number" step="any" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} disabled={isUploading} />
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Cantidad</label>
+                <input required type="number" step="any" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} disabled={isUploading} />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Unidad</label>
-                <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Unidad</label>
+                <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
               </div>
             </div>
           </div>
 
           <div className="pt-2">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Notas / Descripción</label>
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Notas / Descripción</label>
             <textarea 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none min-h-[60px]" 
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none min-h-[60px]" 
               value={formData.description} 
               onChange={e => setFormData({...formData, description: e.target.value})} 
               disabled={isUploading}
