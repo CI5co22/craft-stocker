@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
     <title>Craft Stocker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -57,6 +57,26 @@
         max-height: 2000px; /* Suficiente para el contenido */
         opacity: 1;
       }
+      
+      /* Solución definitiva para el zoom de iOS Safari */
+      @media screen and (-webkit-min-device-pixel-ratio: 0) {
+        select:focus,
+        textarea:focus,
+        input:focus {
+          font-size: 16px !important;
+        }
+      }
+      
+      /* Aseguramos que visualmente no se vean gigantes los inputs en desktop */
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+      
+      @media (min-width: 768px) {
+        input, select, textarea {
+          font-size: 0.875rem !important; /* Volver a text-sm (14px) en desktop si se prefiere */
+        }
+      }
     </style>
   <script type="importmap">
 {
@@ -74,10 +94,8 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
+  </body>
 </html>
