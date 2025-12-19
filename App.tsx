@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { InventoryProvider, useInventory } from './components/InventoryContext';
 import { MaterialCard } from './components/MaterialCard';
 import { AddMaterialModal } from './components/AddMaterialModal';
@@ -22,6 +22,72 @@ const Dashboard: React.FC = () => {
 
   const lowStockCount = materials.filter(m => m.quantity < 3).length;
   const totalItemsCount = materials.length;
+
+  // Filtrado de materiales base
+  const filteredMaterials = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase().trim();
+    if (!searchLower) return materials;
+    
+    return materials.filter(m => {
+      return (
+        m.name.toLowerCase().includes(searchLower) || 
+        m.type.toLowerCase().includes(searchLower) ||
+        m.location.toLowerCase().includes(searchLower) ||
+        (m.description && m.description.toLowerCase().includes(searchLower))
+      );
+    });
+  }, [materials, searchTerm]);
+
+  const topLevelCategories = useMemo(() => {
+    return categories.filter(c => !c.includes('/')).sort();
+  }, [categories]);
+
+  const uniqueLocations = useMemo(() => {
+    return Array.from(new Set(materials.map(m => m.location.trim()).filter(Boolean))).sort();
+  }, [materials]);
+
+  // DETERMINAR QUÉ GRUPOS SON VISIBLES SEGÚN LA BÚSQUEDA
+  const visibleGroups = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase().trim();
+    const baseGroups = viewMode === 'category' ? topLevelCategories : uniqueLocations;
+    
+    if (!searchLower) return baseGroups;
+
+    return baseGroups.filter(groupName => {
+      if (viewMode === 'category') {
+        // Mostrar si el grupo padre tiene materiales filtrados 
+        // O si alguna de sus subcategorías tiene materiales filtrados
+        return filteredMaterials.some(m => 
+          m.type === groupName || m.type.startsWith(`${groupName} / `)
+        );
+      } else {
+        // En vista por ubicación, solo si la ubicación tiene materiales filtrados
+        return filteredMaterials.some(m => m.location === groupName);
+      }
+    });
+  }, [viewMode, topLevelCategories, uniqueLocations, filteredMaterials, searchTerm]);
+
+  // Auto-expandir grupos cuando hay una búsqueda activa
+  useEffect(() => {
+    if (searchTerm.trim().length > 0) {
+      const newExpanded: Record<string, boolean> = {};
+      visibleGroups.forEach(group => {
+        newExpanded[group] = true;
+        // Si estamos en categorías, también expandir subcategorías que tengan resultados
+        if (viewMode === 'category') {
+          categories.forEach(cat => {
+            if (cat.startsWith(`${group} / `) && filteredMaterials.some(m => m.type === cat)) {
+              newExpanded[cat] = true;
+            }
+          });
+        }
+      });
+      setExpandedGroups(newExpanded);
+    } else {
+      // Opcional: Colapsar todo al limpiar búsqueda o mantener estado previo
+      // setExpandedGroups({});
+    }
+  }, [searchTerm, visibleGroups, viewMode, categories, filteredMaterials]);
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => ({
@@ -53,29 +119,10 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const filteredMaterials = useMemo(() => {
-    return materials.filter(m => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        m.name.toLowerCase().includes(searchLower) || 
-        m.type.toLowerCase().includes(searchLower) ||
-        m.location.toLowerCase().includes(searchLower) ||
-        (m.description && m.description.toLowerCase().includes(searchLower))
-      );
-    });
-  }, [materials, searchTerm]);
-
-  const topLevelCategories = useMemo(() => {
-    return categories.filter(c => !c.includes('/')).sort();
-  }, [categories]);
-
-  const uniqueLocations = useMemo(() => {
-    return Array.from(new Set(materials.map(m => m.location.trim()).filter(Boolean))).sort();
-  }, [materials]);
-
   const switchView = (mode: ViewMode) => {
     setViewMode(mode);
     setExpandedGroups({});
+    setSearchTerm('');
   };
 
   const startAddSub = (e: React.MouseEvent, parentName: string) => {
@@ -99,7 +146,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 flex flex-col">
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all duration-300">
         <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-2 group cursor-pointer">
+          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setSearchTerm('')}>
              <div className="bg-emerald-600 text-white p-1.5 rounded-lg shadow-sm group-hover:rotate-12 transition-transform duration-300">
                 <Package size={20} />
              </div>
@@ -118,6 +165,7 @@ const Dashboard: React.FC = () => {
       </header>
 
       <main className="max-w-5xl mx-auto md:p-6 space-y-6 flex-grow w-full">
+        {/* Estadísticas */}
         <section className="mt-4 md:mt-0 px-4 md:px-0">
           <div className="bg-slate-800 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden transition-all duration-500">
              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full -mr-16 -mt-32 blur-3xl pointer-events-none animate-pulse"></div>
@@ -162,6 +210,7 @@ const Dashboard: React.FC = () => {
           </div>
         </section>
 
+        {/* Buscador y Controles */}
         <section className="px-4 md:px-0 space-y-4">
           <div className="flex gap-3">
             <div className="relative flex-grow group">
@@ -173,6 +222,14 @@ const Dashboard: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <CloseIcon size={16} />
+                </button>
+              )}
             </div>
             <div className="flex gap-2">
               <button 
@@ -191,24 +248,32 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* Listado de Grupos Filtrados */}
           <div className="space-y-3">
             {isLoading ? (
                <div className="py-20 text-center animate-pulse">
                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto"></div>
                  <p className="mt-4 text-slate-500 text-sm">Cargando inventario...</p>
                </div>
-            ) : (viewMode === 'category' ? topLevelCategories : uniqueLocations).length > 0 ? (
-              (viewMode === 'category' ? topLevelCategories : uniqueLocations).map((groupName, idx) => {
+            ) : visibleGroups.length > 0 ? (
+              visibleGroups.map((groupName) => {
                 const isExpanded = !!expandedGroups[groupName];
                 const isBeingDraggedOver = dragOverGroup === groupName;
                 
+                // Materiales directos que coinciden con la búsqueda
                 const directMaterials = filteredMaterials.filter(m => 
                    viewMode === 'category' ? m.type === groupName : m.location === groupName
                 );
                 
-                const subcategories = viewMode === 'category' 
+                // Subcategorías que existen bajo este padre
+                const allSubcategoriesInGroup = viewMode === 'category' 
                    ? categories.filter(c => c.startsWith(`${groupName} / `)).sort()
                    : [];
+
+                // Solo mostrar subcategorías que tengan materiales que coincidan con la búsqueda
+                const visibleSubcategories = allSubcategoriesInGroup.filter(subName => 
+                  filteredMaterials.some(m => m.type === subName)
+                );
 
                 return (
                   <div 
@@ -235,9 +300,9 @@ const Dashboard: React.FC = () => {
                           <span className="font-bold text-slate-700">{groupName}</span>
                         </div>
                         
-                        {(directMaterials.length > 0 || subcategories.length > 0) && (
+                        {(directMaterials.length > 0 || visibleSubcategories.length > 0) && (
                           <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full uppercase tracking-wider group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                            {directMaterials.length} {viewMode === 'category' && subcategories.length > 0 ? `+ ${subcategories.length} subs` : ''}
+                            {directMaterials.length} {viewMode === 'category' && visibleSubcategories.length > 0 ? `+ ${visibleSubcategories.length} subs` : ''}
                           </span>
                         )}
                       </div>
@@ -255,7 +320,7 @@ const Dashboard: React.FC = () => {
                     <div className={`group-content-enter ${isExpanded || isBeingDraggedOver ? 'group-content-expanded' : ''}`}>
                       <div className={`p-4 border-t border-slate-50 ${isBeingDraggedOver ? 'bg-emerald-50/50' : 'bg-slate-50/30'} flex flex-col gap-4`}>
                         
-                        {/* 1. Input Inline para añadir subcategoría (Primero) */}
+                        {/* 1. Input Inline para añadir subcategoría (Siempre arriba si se activa) */}
                         {addingSubTo === groupName && (
                           <div className="animate-scale-in" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-300 shadow-sm">
@@ -287,10 +352,10 @@ const Dashboard: React.FC = () => {
                           </div>
                         )}
 
-                        {/* 2. Subcategorías Anidadas (Segundo) */}
-                        {viewMode === 'category' && subcategories.length > 0 && (
+                        {/* 2. Subcategorías Anidadas (Solo visibles si tienen materiales filtrados) */}
+                        {viewMode === 'category' && visibleSubcategories.length > 0 && (
                           <div className="flex flex-col gap-2">
-                            {subcategories.map(subName => {
+                            {visibleSubcategories.map(subName => {
                               const subMaterials = filteredMaterials.filter(m => m.type === subName);
                               const isSubExpanded = !!expandedGroups[subName];
                               const isSubDraggedOver = dragOverGroup === subName;
@@ -335,7 +400,7 @@ const Dashboard: React.FC = () => {
                           </div>
                         )}
 
-                        {/* 3. Materiales Directos (Tercero) */}
+                        {/* 3. Materiales Directos */}
                         {directMaterials.length > 0 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {directMaterials.map(material => (
@@ -344,9 +409,9 @@ const Dashboard: React.FC = () => {
                           </div>
                         )}
 
-                        {directMaterials.length === 0 && subcategories.length === 0 && !addingSubTo && (
+                        {directMaterials.length === 0 && visibleSubcategories.length === 0 && !addingSubTo && (
                           <div className="py-8 text-center text-slate-400 text-xs italic">
-                            {isBeingDraggedOver ? 'Suelta para mover aquí' : 'No hay materiales aquí.'}
+                            {isBeingDraggedOver ? 'Suelta para mover aquí' : 'No se encontraron items en esta categoría.'}
                           </div>
                         )}
                       </div>
@@ -357,7 +422,13 @@ const Dashboard: React.FC = () => {
             ) : (
               <div className="py-16 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200 animate-scale-in">
                 <Package size={40} className="mx-auto mb-2 opacity-20" />
-                <p className="text-sm font-medium">No se encontraron resultados.</p>
+                <p className="text-sm font-medium">No se encontraron resultados para "{searchTerm}".</p>
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  className="mt-2 text-emerald-600 font-bold text-xs uppercase hover:underline"
+                >
+                  Limpiar búsqueda
+                </button>
               </div>
             )}
           </div>
