@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useInventory } from './InventoryContext';
-import { X, Save, Upload, Loader2, AlertCircle } from 'lucide-react';
+import { X, Save, Upload, Loader2, AlertCircle, MapPin } from 'lucide-react';
 import { storageService } from '../services/storage';
 
 interface Props {
@@ -14,6 +15,7 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [tempImagePreview, setTempImagePreview] = useState<string>('');
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -42,6 +44,14 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
     return Array.from(uniqueMap.values()).sort();
   }, [materials]);
 
+  const filteredLocations = React.useMemo(() => {
+    if (!formData.location.trim()) return [];
+    const search = formData.location.toLowerCase().trim();
+    return existingLocations.filter(loc => 
+      loc.toLowerCase().includes(search) && loc.toLowerCase() !== search
+    );
+  }, [existingLocations, formData.location]);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   if (!isOpen) return null;
@@ -53,6 +63,11 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
       const objectUrl = URL.createObjectURL(file);
       setTempImagePreview(objectUrl);
     }
+  };
+
+  const handleSelectLocation = (loc: string) => {
+    setFormData({ ...formData, location: loc });
+    setShowLocationSuggestions(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,9 +108,9 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setTempImagePreview('');
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-slate-100">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-slate-100 animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
           <h2 className="text-lg font-bold text-slate-800">Agregar Material</h2>
           <button onClick={handleClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
@@ -145,11 +160,11 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
               <div className="flex-1 space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre</label>
-                  <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
+                  <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Categoría</label>
-                  <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-800" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} disabled={isUploading}>
+                  <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} disabled={isUploading}>
                     {categories.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
@@ -157,32 +172,75 @@ export const AddMaterialModal: React.FC<Props> = ({ isOpen, onClose }) => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ubicación</label>
-                <input required type="text" list="location-suggestions" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} disabled={isUploading} />
-                <datalist id="location-suggestions">
-                  {existingLocations.map(loc => <option key={loc} value={loc} />)}
-                </datalist>
+                <div className="relative">
+                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                   <input 
+                    required 
+                    type="text" 
+                    autoComplete="off"
+                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" 
+                    value={formData.location} 
+                    onChange={e => {
+                      setFormData({...formData, location: e.target.value});
+                      setShowLocationSuggestions(true);
+                    }} 
+                    onFocus={() => setShowLocationSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                    disabled={isUploading} 
+                  />
+                </div>
+
+                {showLocationSuggestions && filteredLocations.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sugerencias</div>
+                    {filteredLocations.map((loc, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleSelectLocation(loc)}
+                        className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex items-center gap-2 group"
+                      >
+                        <MapPin size={12} className="text-slate-300 group-hover:text-emerald-500" />
+                        {loc}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cant.</label>
-                  <input required type="number" step="any" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} disabled={isUploading} />
+                  <input required type="number" step="any" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} disabled={isUploading} />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Unidad</label>
-                  <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
+                  <input required type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
                 </div>
               </div>
             </div>
 
-            <button type="submit" disabled={isUploading} className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-2 transition-all shadow-md">
+            <div className="pt-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Descripción / Notas</label>
+              <textarea 
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none min-h-[60px]" 
+                value={formData.description} 
+                onChange={e => setFormData({...formData, description: e.target.value})} 
+                disabled={isUploading}
+                placeholder="Detalles adicionales..."
+              />
+            </div>
+
+            <button type="submit" disabled={isUploading} className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-2 transition-all shadow-md active:scale-95">
               {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
               {isUploading ? 'Guardando...' : 'Guardar Material'}
             </button>
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

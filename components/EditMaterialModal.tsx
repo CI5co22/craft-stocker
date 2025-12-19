@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useInventory } from './InventoryContext';
 import { X, Save, Upload, Loader2, Tag, MapPin } from 'lucide-react';
 import { storageService } from '../services/storage';
@@ -16,6 +17,7 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [tempImagePreview, setTempImagePreview] = useState<string>(material.imageUrl || '');
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   
   const [formData, setFormData] = useState({
     name: material.name,
@@ -50,6 +52,14 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
     return unique.map(u => rawLocations.find(l => l.toLowerCase().trim() === u)!).sort();
   }, [materials]);
 
+  const filteredLocations = React.useMemo(() => {
+    if (!formData.location.trim()) return [];
+    const search = formData.location.toLowerCase().trim();
+    return existingLocations.filter(loc => 
+      loc.toLowerCase().includes(search) && loc.toLowerCase() !== search
+    );
+  }, [existingLocations, formData.location]);
+
   if (!isOpen) return null;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +69,11 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
       const objectUrl = URL.createObjectURL(file);
       setTempImagePreview(objectUrl);
     }
+  };
+
+  const handleSelectLocation = (loc: string) => {
+    setFormData({ ...formData, location: loc });
+    setShowLocationSuggestions(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,8 +98,8 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
           <h2 className="text-lg font-bold text-slate-800">Editar Material</h2>
@@ -137,23 +152,42 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-50">
-            <div>
+            <div className="relative">
               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Ubicación física</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600" size={14} />
                 <input 
                   required 
                   type="text" 
-                  list="edit-location-suggestions" 
+                  autoComplete="off"
                   className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none" 
                   value={formData.location} 
-                  onChange={e => setFormData({...formData, location: e.target.value})} 
+                  onChange={e => {
+                    setFormData({...formData, location: e.target.value});
+                    setShowLocationSuggestions(true);
+                  }} 
+                  onFocus={() => setShowLocationSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                   disabled={isUploading} 
                 />
               </div>
-              <datalist id="edit-location-suggestions">
-                {existingLocations.map(loc => <option key={loc} value={loc} />)}
-              </datalist>
+
+              {showLocationSuggestions && filteredLocations.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3">Existentes</div>
+                  {filteredLocations.map((loc, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleSelectLocation(loc)}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex items-center gap-2 group"
+                    >
+                      <MapPin size={12} className="text-slate-300 group-hover:text-emerald-500" />
+                      {loc}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -183,6 +217,7 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

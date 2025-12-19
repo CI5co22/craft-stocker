@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
 interface Props {
@@ -25,8 +26,8 @@ export const ConfirmModal: React.FC<Props> = ({
 }) => {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200">
       <div 
         className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 transform transition-all animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -71,6 +72,7 @@ export const ConfirmModal: React.FC<Props> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
