@@ -51,11 +51,37 @@
         max-height: 0;
         opacity: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
+        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
       }
+      
       .group-content-expanded {
-        max-height: 2000px; /* Suficiente para el contenido */
+        max-height: 60vh; /* Altura máxima relativa a la pantalla */
         opacity: 1;
+        overflow-y: auto !important; /* Habilitar scroll */
+        scrollbar-width: thin;
+        scrollbar-color: #10b981 #f8fafc;
+      }
+
+      @media (min-width: 768px) {
+        .group-content-expanded {
+          max-height: 550px; /* Altura máxima fija en desktop */
+        }
+      }
+
+      /* Estilos personalizados para el scrollbar en Webkit (Safari/Chrome) */
+      .group-content-expanded::-webkit-scrollbar {
+        width: 6px;
+      }
+      .group-content-expanded::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .group-content-expanded::-webkit-scrollbar-thumb {
+        background-color: #d1fae5; /* craft-100 */
+        border-radius: 20px;
+        border: 2px solid transparent;
+      }
+      .group-content-expanded:hover::-webkit-scrollbar-thumb {
+        background-color: #10b981; /* craft-500 */
       }
       
       /* Solución definitiva para el zoom de iOS Safari */
@@ -74,7 +100,7 @@
       
       @media (min-width: 768px) {
         input, select, textarea {
-          font-size: 0.875rem !important; /* Volver a text-sm (14px) en desktop si se prefiere */
+          font-size: 0.875rem !important;
         }
       }
     </style>

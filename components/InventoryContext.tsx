@@ -89,8 +89,32 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
   }, []);
 
+  const updateCategoryName = useCallback((oldName: string, newName: string) => {
+    if (!newName.trim() || oldName === newName) return;
+    
+    // 1. Actualizar la lista de categorías (incluyendo subcategorías afectadas)
+    setCategories(prev => prev.map(cat => {
+      if (cat === oldName) return newName;
+      if (cat.startsWith(`${oldName} / `)) {
+        return cat.replace(oldName, newName);
+      }
+      return cat;
+    }));
+
+    // 2. Actualizar los materiales asociados (incluyendo subcategorías afectadas)
+    setMaterials(prev => prev.map(m => {
+      if (m.type === oldName) {
+        return { ...m, type: newName, lastUpdated: Date.now() };
+      }
+      if (m.type.startsWith(`${oldName} / `)) {
+        return { ...m, type: m.type.replace(oldName, newName), lastUpdated: Date.now() };
+      }
+      return m;
+    }));
+  }, []);
+
   const deleteCategory = useCallback((name: string) => {
-    setCategories(prev => prev.filter(c => c !== name));
+    setCategories(prev => prev.filter(c => c !== name && !c.startsWith(`${name} / `)));
   }, []);
 
   return (
@@ -105,6 +129,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       decrementQuantity, 
       deleteMaterial,
       addCategory,
+      updateCategoryName,
       deleteCategory,
       refreshData
     }}>

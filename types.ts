@@ -41,6 +41,7 @@ export interface InventoryContextType {
   decrementQuantity: (id: string) => void;
   deleteMaterial: (id: string) => void;
   addCategory: (name: string) => void;
+  updateCategoryName: (oldName: string, newName: string) => void;
   deleteCategory: (name: string) => void;
   refreshData: () => Promise<void>;
 }
