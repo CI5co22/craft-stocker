@@ -57,12 +57,14 @@ const Dashboard: React.FC = () => {
       if (viewMode === 'category') {
         // Mostrar si el grupo padre tiene materiales filtrados 
         // O si alguna de sus subcategorías tiene materiales filtrados
-        return filteredMaterials.some(m => 
-          m.type === groupName || m.type.startsWith(`${groupName} / `)
+        // O si el nombre del grupo coincide con la búsqueda
+        return (
+          groupName.toLowerCase().includes(searchLower) ||
+          filteredMaterials.some(m => m.type === groupName || m.type.startsWith(`${groupName} / `))
         );
       } else {
-        // En vista por ubicación, solo si la ubicación tiene materiales filtrados
-        return filteredMaterials.some(m => m.location === groupName);
+        // En vista por ubicación
+        return groupName.toLowerCase().includes(searchLower) || filteredMaterials.some(m => m.location === groupName);
       }
     });
   }, [viewMode, topLevelCategories, uniqueLocations, filteredMaterials, searchTerm]);
@@ -73,19 +75,15 @@ const Dashboard: React.FC = () => {
       const newExpanded: Record<string, boolean> = {};
       visibleGroups.forEach(group => {
         newExpanded[group] = true;
-        // Si estamos en categorías, también expandir subcategorías que tengan resultados
         if (viewMode === 'category') {
           categories.forEach(cat => {
-            if (cat.startsWith(`${group} / `) && filteredMaterials.some(m => m.type === cat)) {
+            if (cat.startsWith(`${group} / `) && (cat.toLowerCase().includes(searchTerm.toLowerCase()) || filteredMaterials.some(m => m.type === cat))) {
               newExpanded[cat] = true;
             }
           });
         }
       });
       setExpandedGroups(newExpanded);
-    } else {
-      // Opcional: Colapsar todo al limpiar búsqueda o mantener estado previo
-      // setExpandedGroups({});
     }
   }, [searchTerm, visibleGroups, viewMode, categories, filteredMaterials]);
 
@@ -259,6 +257,7 @@ const Dashboard: React.FC = () => {
               visibleGroups.map((groupName) => {
                 const isExpanded = !!expandedGroups[groupName];
                 const isBeingDraggedOver = dragOverGroup === groupName;
+                const searchLower = searchTerm.toLowerCase().trim();
                 
                 // Materiales directos que coinciden con la búsqueda
                 const directMaterials = filteredMaterials.filter(m => 
@@ -270,10 +269,13 @@ const Dashboard: React.FC = () => {
                    ? categories.filter(c => c.startsWith(`${groupName} / `)).sort()
                    : [];
 
-                // Solo mostrar subcategorías que tengan materiales que coincidan con la búsqueda
-                const visibleSubcategories = allSubcategoriesInGroup.filter(subName => 
-                  filteredMaterials.some(m => m.type === subName)
-                );
+                // Solo filtrar subcategorías si hay una búsqueda activa
+                const visibleSubcategories = searchLower 
+                  ? allSubcategoriesInGroup.filter(subName => 
+                      subName.toLowerCase().includes(searchLower) ||
+                      filteredMaterials.some(m => m.type === subName)
+                    )
+                  : allSubcategoriesInGroup;
 
                 return (
                   <div 
@@ -320,7 +322,7 @@ const Dashboard: React.FC = () => {
                     <div className={`group-content-enter ${isExpanded || isBeingDraggedOver ? 'group-content-expanded' : ''}`}>
                       <div className={`p-4 border-t border-slate-50 ${isBeingDraggedOver ? 'bg-emerald-50/50' : 'bg-slate-50/30'} flex flex-col gap-4`}>
                         
-                        {/* 1. Input Inline para añadir subcategoría (Siempre arriba si se activa) */}
+                        {/* 1. Input Inline para añadir subcategoría */}
                         {addingSubTo === groupName && (
                           <div className="animate-scale-in" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-300 shadow-sm">
@@ -352,7 +354,7 @@ const Dashboard: React.FC = () => {
                           </div>
                         )}
 
-                        {/* 2. Subcategorías Anidadas (Solo visibles si tienen materiales filtrados) */}
+                        {/* 2. Subcategorías Anidadas */}
                         {viewMode === 'category' && visibleSubcategories.length > 0 && (
                           <div className="flex flex-col gap-2">
                             {visibleSubcategories.map(subName => {
@@ -390,7 +392,7 @@ const Dashboard: React.FC = () => {
                                           {subMaterials.map(m => <MaterialCard key={m.id} material={m} />)}
                                         </div>
                                       ) : (
-                                        <div className="text-center py-4 text-xs text-slate-400 italic">Vacio</div>
+                                        <div className="text-center py-4 text-xs text-slate-400 italic">Vacío</div>
                                       )}
                                     </div>
                                   )}
@@ -411,7 +413,7 @@ const Dashboard: React.FC = () => {
 
                         {directMaterials.length === 0 && visibleSubcategories.length === 0 && !addingSubTo && (
                           <div className="py-8 text-center text-slate-400 text-xs italic">
-                            {isBeingDraggedOver ? 'Suelta para mover aquí' : 'No se encontraron items en esta categoría.'}
+                            {isBeingDraggedOver ? 'Suelta para mover aquí' : 'No hay materiales aquí.'}
                           </div>
                         )}
                       </div>
