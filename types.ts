@@ -1,8 +1,8 @@
 
 export interface Material {
   id: string;
-  type: string;
-  name: string;
+  type: string; 
+  name: string; 
   description?: string;
   location: string;
   quantity: number;

@@ -13,10 +13,10 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     const { materials: loadedMaterials, categories: loadedCategories } = await storageService.loadData();
-
+    
     if (loadedMaterials !== null) setMaterials(loadedMaterials);
     if (loadedCategories !== null) setCategories(loadedCategories);
-
+    
     setIsLoading(false);
   }, []);
 
@@ -53,25 +53,25 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   const updateMaterial = useCallback((id: string, updates: Partial<Omit<Material, 'id' | 'lastUpdated'>>) => {
-    setMaterials(prev => prev.map(m =>
+    setMaterials(prev => prev.map(m => 
       m.id === id ? { ...m, ...updates, lastUpdated: Date.now() } : m
     ));
   }, []);
 
   const updateQuantity = useCallback((id: string, newQuantity: number) => {
-    setMaterials(prev => prev.map(m =>
+    setMaterials(prev => prev.map(m => 
       m.id === id ? { ...m, quantity: Math.max(0, newQuantity), lastUpdated: Date.now() } : m
     ));
   }, []);
 
   const incrementQuantity = useCallback((id: string) => {
-    setMaterials(prev => prev.map(m =>
+    setMaterials(prev => prev.map(m => 
       m.id === id ? { ...m, quantity: m.quantity + 1, lastUpdated: Date.now() } : m
     ));
   }, []);
 
   const decrementQuantity = useCallback((id: string) => {
-    setMaterials(prev => prev.map(m =>
+    setMaterials(prev => prev.map(m => 
       m.id === id ? { ...m, quantity: Math.max(0, m.quantity - 1), lastUpdated: Date.now() } : m
     ));
   }, []);
@@ -94,15 +94,15 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   return (
-    <InventoryContext.Provider value={{
-      materials,
+    <InventoryContext.Provider value={{ 
+      materials, 
       categories,
       isLoading,
-      addMaterial,
+      addMaterial, 
       updateMaterial,
-      updateQuantity,
-      incrementQuantity,
-      decrementQuantity,
+      updateQuantity, 
+      incrementQuantity, 
+      decrementQuantity, 
       deleteMaterial,
       addCategory,
       deleteCategory,
