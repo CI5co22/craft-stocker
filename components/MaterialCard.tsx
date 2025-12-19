@@ -8,9 +8,10 @@ import { EditMaterialModal } from './EditMaterialModal';
 
 interface Props {
   material: Material;
+  viewMode?: 'category' | 'location';
 }
 
-export const MaterialCard: React.FC<Props> = ({ material }) => {
+export const MaterialCard: React.FC<Props> = ({ material, viewMode }) => {
   const { updateQuantity, deleteMaterial } = useInventory();
   const [isEditingAmount, setIsEditingAmount] = useState(false);
   const [customAmount, setCustomAmount] = useState<string>('');
@@ -122,12 +123,23 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
               </h3>
               
               <div className="flex flex-wrap gap-1">
+                {/* Etiqueta de Ubicación (Siempre visible) */}
                 <div 
                   className="flex items-center gap-1 text-[9px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-800"
                 >
                   <MapPin size={9} className="text-emerald-500 flex-shrink-0" />
                   <span className="truncate uppercase tracking-wider">{material.location}</span>
                 </div>
+
+                {/* Etiqueta de Categoría (Solo visible en modo ubicación) */}
+                {viewMode === 'location' && (
+                  <div 
+                    className="flex items-center gap-1 text-[9px] text-slate-500 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700"
+                  >
+                    <Tag size={9} className="text-slate-400 dark:text-slate-500 flex-shrink-0" />
+                    <span className="truncate uppercase tracking-wider">{material.type}</span>
+                  </div>
+                )}
               </div>
 
               {material.description && (

@@ -405,7 +405,7 @@ const Dashboard: React.FC = () => {
                                     <div className="p-3 pt-0">
                                       {subMaterials.length > 0 ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                          {subMaterials.map(m => <MaterialCard key={m.id} material={m} />)}
+                                          {subMaterials.map(m => <MaterialCard key={m.id} material={m} viewMode={viewMode} />)}
                                         </div>
                                       ) : (
                                         <div className="text-center py-4 text-xs text-slate-400 italic">Vacío</div>
@@ -421,7 +421,7 @@ const Dashboard: React.FC = () => {
                         {directMaterials.length > 0 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {directMaterials.map(material => (
-                              <MaterialCard key={material.id} material={material} />
+                              <MaterialCard key={material.id} material={material} viewMode={viewMode} />
                             ))}
                           </div>
                         )}
