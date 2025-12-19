@@ -1,23 +1,23 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Material, InventoryContextType, DEFAULT_CATEGORIES } from '../types';
+import { Material, InventoryContextType } from '../types';
 import { storageService } from '../services/storage';
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Inicializamos con arrays vacíos mientras carga
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Cargar datos iniciales desde el servidor
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     const { materials: loadedMaterials, categories: loadedCategories } = await storageService.loadData();
     
-    if (loadedMaterials) setMaterials(loadedMaterials);
-    if (loadedCategories) setCategories(loadedCategories);
+    // Si el servidor devuelve null (error de conexión), mantenemos el estado local anterior
+    // Si devuelve un array vacío, significa que el inventario está realmente vacío
+    if (loadedMaterials !== null) setMaterials(loadedMaterials);
+    if (loadedCategories !== null) setCategories(loadedCategories);
     
     setIsLoading(false);
   }, []);
@@ -26,26 +26,23 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     refreshData();
   }, [refreshData]);
 
-  // Persistencia: Guardar cambios cuando el estado cambia
-  // IMPORTANTE: Solo guardamos si NO estamos cargando, para evitar sobrescribir con datos vacíos
   useEffect(() => {
-    if (!isLoading && materials.length > 0) {
+    if (!isLoading) {
       storageService.saveMaterials(materials);
     }
   }, [materials, isLoading]);
 
   useEffect(() => {
-    if (!isLoading && categories.length > 0) {
+    if (!isLoading) {
       storageService.saveCategories(categories);
     }
   }, [categories, isLoading]);
 
-  // Generador de ID robusto
   const generateId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
 
   const addMaterial = useCallback((material: Omit<Material, 'id' | 'lastUpdated'>) => {

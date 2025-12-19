@@ -1,8 +1,8 @@
 
 export interface Material {
   id: string;
-  type: string; // Changed from enum to string for dynamic categories
-  name: string; // Description detailed
+  type: string; 
+  name: string; 
   description?: string;
   location: string;
   quantity: number;
@@ -17,9 +17,8 @@ export interface Category {
   color?: string;
 }
 
-export const DEFAULT_CATEGORIES = [
-  'Papel', 'Tela', 'Hilo/Lana', 'Pintura', 'Adhesivo', 'Joyería/Cuentas', 'Herramienta', 'Otro'
-];
+// Empezamos con 0 categorías por defecto para producción
+export const DEFAULT_CATEGORIES: string[] = [];
 
 export interface ChatMessage {
   id: string;

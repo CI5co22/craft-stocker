@@ -4,76 +4,110 @@ import { InventoryProvider, useInventory } from './components/InventoryContext';
 import { MaterialCard } from './components/MaterialCard';
 import { AddMaterialModal } from './components/AddMaterialModal';
 import { CategoryManager } from './components/CategoryManager';
-import { Search, Plus, Package, Filter, Settings2, AlertTriangle, Layers, Box, RefreshCw } from 'lucide-react';
+import { GeminiAssistant } from './components/GeminiAssistant';
+import { Search, Plus, Package, Settings2, RefreshCw, ChevronDown, ChevronRight, AlertTriangle, Box, MapPin, Tags } from 'lucide-react';
+
+type ViewMode = 'category' | 'location';
 
 const Dashboard: React.FC = () => {
   const { materials, categories, isLoading, refreshData } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('category');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(false);
+  
+  // Explicitly initialize all groups as false (closed)
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
-  // Stats
   const lowStockCount = materials.filter(m => m.quantity < 3).length;
-  const totalItems = materials.reduce((acc, curr) => acc + curr.quantity, 0);
+  const totalItemsCount = materials.length;
 
-  // Derive unique locations for the filter dropdown (Smart Deduplication)
-  const uniqueLocations = useMemo(() => {
-    const rawLocations = materials.map(m => m.location).filter(Boolean);
-    const uniqueMap = new Map<string, string>(); // lowercase -> display name
-    
-    rawLocations.forEach(loc => {
-      const lower = loc.toLowerCase().trim();
-      // Prefer the version with more capital letters or the first one seen
-      if (!uniqueMap.has(lower) || (loc !== lower && uniqueMap.get(lower) === lower)) {
-        uniqueMap.set(lower, loc.trim());
-      }
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
+
+  const filteredMaterials = useMemo(() => {
+    return materials.filter(m => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        m.name.toLowerCase().includes(searchLower) || 
+        m.type.toLowerCase().includes(searchLower) ||
+        m.location.toLowerCase().includes(searchLower) ||
+        (m.description && m.description.toLowerCase().includes(searchLower))
+      );
     });
+  }, [materials, searchTerm]);
+
+  const groupedData = useMemo(() => {
+    const groups: Record<string, typeof materials> = {};
     
-    return Array.from(uniqueMap.values()).sort();
+    if (viewMode === 'category') {
+      categories.forEach(cat => groups[cat] = []);
+      filteredMaterials.forEach(m => {
+        const cat = categories.includes(m.type) ? m.type : 'Otro';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(m);
+      });
+    } else {
+      filteredMaterials.forEach(m => {
+        const loc = m.location.trim() || 'Sin Ubicación';
+        if (!groups[loc]) groups[loc] = [];
+        groups[loc].push(m);
+      });
+    }
+
+    return groups;
+  }, [filteredMaterials, categories, viewMode]);
+
+  const groupsToShow = useMemo(() => {
+    const allKeys = Object.keys(groupedData).sort();
+    if (!searchTerm) return allKeys;
+    return allKeys.filter(key => groupedData[key].length > 0);
+  }, [groupedData, searchTerm]);
+
+  const uniqueLocationsCount = useMemo(() => {
+    return new Set(materials.map(m => m.location.trim()).filter(Boolean)).size;
   }, [materials]);
 
-  const filteredMaterials = materials.filter(m => {
-    const matchesSearch = 
-      m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      m.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (m.description && m.description.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-    // Smart location matching: "Caja" matches "caja"
-    const matchesLocation = locationFilter 
-      ? m.location.toLowerCase() === locationFilter.toLowerCase() 
-      : true;
-    
-    return matchesSearch && matchesLocation;
-  });
+  const switchView = (mode: ViewMode) => {
+    setViewMode(mode);
+    setExpandedGroups({}); // Always close all when switching views
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 flex flex-col">
-      
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-2 text-emerald-800">
+          <div className="flex items-center gap-2">
              <div className="bg-emerald-600 text-white p-1.5 rounded-lg shadow-sm">
                 <Package size={20} />
              </div>
-             <span className="font-bold text-xl tracking-tight hidden md:block text-slate-800">Karoo - Inventario</span>
-             <span className="font-bold text-xl tracking-tight md:hidden text-slate-800">Karoo</span>
+             <span className="font-bold text-xl tracking-tight text-slate-800">Craft Stocker</span>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
              <button 
                 onClick={() => refreshData()}
                 disabled={isLoading}
-                className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all disabled:animate-spin disabled:opacity-50"
-                title="Actualizar datos"
+                className={`p-2 text-slate-500 hover:text-emerald-600 rounded-full transition-all ${isLoading ? 'animate-spin' : ''}`}
+                title="Sincronizar"
              >
                 <RefreshCw size={20} />
              </button>
-
+             <button 
+                onClick={() => setShowAssistant(!showAssistant)}
+                className={`p-2 rounded-full transition-all ${showAssistant ? 'bg-indigo-100 text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
+                title="Asistente IA"
+             >
+                <Box size={20} />
+             </button>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="md:hidden bg-emerald-600 text-white p-2 rounded-full shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
+              className="md:hidden bg-emerald-600 text-white p-2 rounded-full shadow-lg"
             >
               <Plus size={24} />
             </button>
@@ -82,140 +116,156 @@ const Dashboard: React.FC = () => {
       </header>
 
       <main className="max-w-5xl mx-auto md:p-6 space-y-6 flex-grow w-full">
-        
-        {/* Inventory Summary Hero (Green/Gray Professional Theme) */}
+        {showAssistant && (
+          <section className="px-4 md:px-0">
+            <GeminiAssistant />
+          </section>
+        )}
+
         <section className="mt-4 md:mt-0 px-4 md:px-0">
-          <div className="bg-gradient-to-br from-slate-800 to-emerald-900 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-slate-700/50">
-             {/* Decorative Elements */}
+          <div className="bg-slate-800 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full -mr-16 -mt-32 blur-3xl pointer-events-none"></div>
-             <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/30 rounded-full -ml-16 -mb-32 blur-3xl pointer-events-none"></div>
-
+             
              <div className="relative z-10">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold mb-2">Panel de Control</h1>
-                  </div>
-                </div>
+                <h1 className="text-2xl font-bold mb-1">Mi Inventario</h1>
+                <p className="text-slate-400 text-sm mb-6">Toca una estadística para cambiar la agrupación</p>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-2 mb-1 text-emerald-200 text-xs uppercase font-bold tracking-wider">
-                      <Box size={14} /> Total Items
-                    </div>
-                    <div className="text-2xl md:text-3xl font-bold">{materials.length}</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                    <div className="text-emerald-400 text-[10px] uppercase font-bold mb-1">Items</div>
+                    <div className="text-2xl font-bold">{totalItemsCount}</div>
                   </div>
-
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-2 mb-1 text-emerald-200 text-xs uppercase font-bold tracking-wider">
-                      <Layers size={14} /> Unidades
+                  
+                  <button 
+                    onClick={() => switchView('category')}
+                    className={`text-left rounded-xl p-3 border transition-all ${viewMode === 'category' ? 'bg-emerald-600/30 border-emerald-500 ring-1 ring-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-emerald-400 text-[10px] uppercase font-bold">Categorías</div>
+                      <Tags size={12} className={viewMode === 'category' ? 'text-emerald-400' : 'text-slate-500'} />
                     </div>
-                    <div className="text-2xl md:text-3xl font-bold">{totalItems}</div>
-                  </div>
+                    <div className="text-2xl font-bold">{categories.length}</div>
+                  </button>
 
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-2 mb-1 text-emerald-200 text-xs uppercase font-bold tracking-wider">
-                      <Filter size={14} /> Categorías
+                  <button 
+                    onClick={() => switchView('location')}
+                    className={`text-left rounded-xl p-3 border transition-all ${viewMode === 'location' ? 'bg-emerald-600/30 border-emerald-500 ring-1 ring-emerald-500 shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-emerald-400 text-[10px] uppercase font-bold">Ubicaciones</div>
+                      <MapPin size={12} className={viewMode === 'location' ? 'text-emerald-400' : 'text-slate-500'} />
                     </div>
-                    <div className="text-2xl md:text-3xl font-bold">{categories.length}</div>
-                  </div>
+                    <div className="text-2xl font-bold">{uniqueLocationsCount}</div>
+                  </button>
 
-                   <div className={`backdrop-blur-sm rounded-xl p-4 border transition-colors ${lowStockCount > 0 ? 'bg-amber-500/20 border-amber-400/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                    <div className={`flex items-center gap-2 mb-1 text-xs uppercase font-bold tracking-wider ${lowStockCount > 0 ? 'text-amber-200' : 'text-emerald-200'}`}>
-                      <AlertTriangle size={14} /> Stock Bajo
-                    </div>
-                    <div className={`text-2xl md:text-3xl font-bold ${lowStockCount > 0 ? 'text-amber-100' : 'text-white'}`}>{lowStockCount}</div>
+                  <div className={`rounded-xl p-3 border ${lowStockCount > 0 ? 'bg-amber-500/20 border-amber-500/30' : 'bg-white/5 border-white/10'}`}>
+                    <div className="text-amber-300 text-[10px] uppercase font-bold mb-1">Stock Bajo</div>
+                    <div className="text-2xl font-bold">{lowStockCount}</div>
                   </div>
                 </div>
              </div>
           </div>
         </section>
 
-        {/* Dashboard Controls */}
-        <section className="px-4 md:px-0">
-          <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 mb-6">
-            <div className="w-full md:w-auto">
-               <h2 className="text-xl font-bold text-slate-800">Listado de Materiales</h2>
+        <section className="px-4 md:px-0 space-y-4">
+          <div className="flex gap-3">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder={`Buscar en ${viewMode === 'category' ? 'categorías' : 'ubicaciones'}...`} 
+                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              {/* Search Bar */}
-              <div className="relative flex-grow">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Buscar material..." 
-                  className="w-full sm:w-56 pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm shadow-sm placeholder:text-slate-400 text-slate-700"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-
-              {/* Location Filter */}
-              <div className="relative">
-                 <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                 <select 
-                    className="w-full sm:w-48 pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm appearance-none shadow-sm cursor-pointer text-slate-700"
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                 >
-                    <option value="">Todas las ubicaciones</option>
-                    {uniqueLocations.map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                 </select>
-              </div>
-
-              {/* Manage Categories Button */}
+            <div className="flex gap-2">
               <button 
                 onClick={() => setIsCategoryManagerOpen(true)}
-                className="flex items-center justify-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-lg font-medium transition-colors text-sm shadow-sm"
-                title="Gestionar Categorías"
+                className="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                title="Editar Categorías"
               >
-                <Settings2 size={16} />
-                <span className="hidden sm:inline">Categorías</span>
+                <Settings2 size={20} />
               </button>
-
-              {/* Add Item Button (Desktop) */}
               <button 
                 onClick={() => setIsModalOpen(true)}
-                className="hidden md:flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-medium transition-all shadow-md shadow-emerald-200/50 active:scale-95"
+                className="hidden md:flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-700 shadow-sm transition-all active:scale-95"
               >
-                <Plus size={18} />
-                Agregar
+                <Plus size={18} /> Nuevo
               </button>
             </div>
           </div>
 
-          {/* Inventory Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
             {isLoading ? (
-               <div className="col-span-full py-20 text-center">
-                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-                 <p className="text-slate-500">Cargando inventario...</p>
+               <div className="py-20 text-center">
+                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto"></div>
+                 <p className="mt-4 text-slate-500 text-sm">Cargando inventario...</p>
                </div>
-            ) : filteredMaterials.length > 0 ? (
-              filteredMaterials.map(material => (
-                <MaterialCard key={material.id} material={material} />
-              ))
+            ) : groupsToShow.length > 0 ? (
+              groupsToShow.map(groupName => {
+                const items = groupedData[groupName];
+                const isExpanded = !!expandedGroups[groupName];
+                const hasLowStock = items.some(i => i.quantity < 3);
+
+                return (
+                  <div key={groupName} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+                    <button 
+                      onClick={() => toggleGroup(groupName)}
+                      className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                          <ChevronDown size={20} className="text-slate-400" />
+                        ) : (
+                          <ChevronRight size={20} className="text-slate-400" />
+                        )}
+                        <div className="flex items-center gap-2">
+                          {viewMode === 'location' ? <MapPin size={16} className="text-emerald-600" /> : <Tags size={16} className="text-emerald-600" />}
+                          <span className="font-bold text-slate-700">{groupName}</span>
+                        </div>
+                        <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          {items.length} {items.length === 1 ? 'item' : 'items'}
+                        </span>
+                        {hasLowStock && (
+                          <div className="flex items-center gap-1 text-amber-600 text-[10px] font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                            <AlertTriangle size={12} />
+                            Bajo
+                          </div>
+                        )}
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="p-4 bg-slate-50/30 border-t border-slate-50 animate-in slide-in-from-top-2 duration-200">
+                        {items.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {items.map(material => (
+                              <MaterialCard key={material.id} material={material} />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-8 text-center text-slate-400 text-sm italic">
+                            No hay materiales aquí.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             ) : (
-              <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200 flex flex-col items-center">
-                <Package size={48} className="mb-4 opacity-20" />
-                <p className="text-lg font-medium text-slate-600">No se encontraron materiales</p>
-                <p className="text-sm text-slate-400 max-w-xs mx-auto mt-1">Intenta ajustar los filtros o agrega un nuevo artículo a tu colección.</p>
-                <button 
-                  onClick={() => { setSearchTerm(''); setLocationFilter(''); }} 
-                  className="text-emerald-600 hover:text-emerald-700 hover:underline mt-4 text-sm font-medium"
-                >
-                    Limpiar filtros
-                </button>
+              <div className="py-16 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
+                <Package size={40} className="mx-auto mb-2 opacity-20" />
+                <p className="text-sm font-medium">No se encontraron resultados.</p>
               </div>
             )}
           </div>
         </section>
       </main>
 
-      <footer className="py-8 text-center text-slate-400 text-sm font-medium">
-        By Arnold Ajcip and Gemini :)
+      <footer className="py-8 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+        Cloud Sync Active &bull; Craft Stocker v1.6
       </footer>
       
       <AddMaterialModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

@@ -1,78 +1,104 @@
+
 import { Material } from "../types";
 
-// Helper para manejar errores de red
-const handleResponse = async (res: Response) => {
-  if (!res.ok) {
-    const text = await res.text();
-    console.error(`API Error Details (${res.status}):`, text);
-    throw new Error(`API Error: ${res.status} ${text}`);
-  }
-  return res.json();
-};
+const LOCAL_STORAGE_KEY_MATERIALS = 'craft_stocker_materials';
+const LOCAL_STORAGE_KEY_CATEGORIES = 'craft_stocker_categories';
 
 export const storageService = {
-  // Cargar datos desde Vercel KV a través de la API
   async loadData(): Promise<{ materials: Material[] | null, categories: string[] | null }> {
     try {
-      const response = await fetch('/api/data');
+      const response = await fetch('/api/data', {
+        headers: { 'Accept': 'application/json' }
+      });
+      
       if (!response.ok) {
-        console.warn("No se pudo conectar con la API /api/data. Verifica que Vercel KV esté conectado.");
+        const errorText = await response.text().catch(() => '');
+        console.warn(`Server Error (${response.status}):`, errorText || response.statusText);
+        
+        // If 404 (File Not Found) or 500, fallback to local storage
+        if (response.status === 404 || response.status === 500) {
+          console.info("Using local storage fallback.");
+          const localMats = localStorage.getItem(LOCAL_STORAGE_KEY_MATERIALS);
+          const localCats = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
+          return {
+            materials: localMats ? JSON.parse(localMats) : null,
+            categories: localCats ? JSON.parse(localCats) : null
+          };
+        }
         return { materials: null, categories: null };
       }
       
       const data = await response.json();
+      
+      // Update local cache
+      if (data.materials) localStorage.setItem(LOCAL_STORAGE_KEY_MATERIALS, JSON.stringify(data.materials));
+      if (data.categories) localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(data.categories));
+      
       return {
-        materials: data.materials && Array.isArray(data.materials) ? data.materials : null,
-        categories: data.categories && Array.isArray(data.categories) ? data.categories : null
+        materials: Array.isArray(data.materials) ? data.materials : null,
+        categories: Array.isArray(data.categories) ? data.categories : null
       };
     } catch (error) {
-      console.error("Error loading data from API:", error);
-      return { materials: null, categories: null };
+      console.error("Fetch failed, using local storage fallback:", error);
+      const localMats = localStorage.getItem(LOCAL_STORAGE_KEY_MATERIALS);
+      const localCats = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
+      return {
+        materials: localMats ? JSON.parse(localMats) : null,
+        categories: localCats ? JSON.parse(localCats) : null
+      };
     }
   },
 
-  // Guardar materiales en Vercel KV
   async saveMaterials(materials: Material[]): Promise<void> {
+    // Always save to local storage first
+    localStorage.setItem(LOCAL_STORAGE_KEY_MATERIALS, JSON.stringify(materials));
+    
     try {
-      await fetch('/api/data', {
+      const response = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ materials })
       });
+      if (!response.ok) console.warn('Cloud sync failed, data saved locally only.');
     } catch (error) {
-      console.error("Error saving materials to API:", error);
+      console.error("Cloud save failed:", error);
     }
   },
 
-  // Guardar categorías en Vercel KV
   async saveCategories(categories: string[]): Promise<void> {
+    localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(categories));
+    
     try {
-      await fetch('/api/data', {
+      const response = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categories })
       });
+      if (!response.ok) console.warn('Cloud sync failed.');
     } catch (error) {
-      console.error("Error saving categories to API:", error);
+      console.error("Cloud save failed:", error);
     }
   },
 
-  // Subir imagen a Vercel Blob
   async uploadImage(file: File): Promise<string> {
     try {
-      // IMPORTANTE: No establecemos 'Content-Type' manualmente aquí.
-      // fetch usará el stream del archivo directamente, lo cual es manejado por el backend
-      // gracias a config { bodyParser: false } en api/upload.ts
       const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
         method: 'POST',
         body: file,
       });
       
-      const blob = await handleResponse(response);
-      return blob.url;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
+      }
+      
+      const data = await response.json();
+      return data.url;
     } catch (error) {
-      console.error("Error uploading image:", error);
-      alert("Error al subir imagen. Verifica que Vercel Blob esté conectado en tu proyecto.");
+      console.error("Upload failed:", error);
+      // For images, we can't easily fallback to local storage without base64 (which is too large),
+      // so we suggest using a default or alert.
+      alert("Error al subir imagen. Se usará un icono por defecto.");
       throw error;
     }
   }
