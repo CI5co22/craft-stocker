@@ -17,15 +17,18 @@ export interface Category {
   color?: string;
 }
 
-// Empezamos con 0 categorías por defecto para producción
-export const DEFAULT_CATEGORIES: string[] = [];
-
+/**
+ * Represents a single message in the AI assistant conversation.
+ */
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   text: string;
   timestamp: number;
 }
+
+// Empezamos con 0 categorías por defecto para producción
+export const DEFAULT_CATEGORIES: string[] = [];
 
 export interface InventoryContextType {
   materials: Material[];
