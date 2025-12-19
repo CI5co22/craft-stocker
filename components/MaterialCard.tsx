@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { Material } from '../types';
 import { useInventory } from './InventoryContext';
-import { Plus, Minus, MapPin, Trash2, Package, Edit2, Check, X } from 'lucide-react';
+import { Plus, Minus, MapPin, Trash2, Package, Edit2, Check, X, Tag } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
+import { EditMaterialModal } from './EditMaterialModal';
 
 interface Props {
   material: Material;
@@ -14,10 +15,16 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
   const [isEditingAmount, setIsEditingAmount] = useState(false);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteConfirm(true);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowEditModal(true);
   };
 
   const handleConfirmDelete = () => {
@@ -42,27 +49,40 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
     }
   };
 
-  const stockLevelColor = material.quantity === 0 
-    ? 'bg-red-50 text-red-700 border-red-200' 
-    : material.quantity < 3 
-      ? 'bg-amber-50 text-amber-700 border-amber-200' 
+  const stockLevelColor = material.quantity === 0
+    ? 'bg-red-50 text-red-700 border-red-200'
+    : material.quantity < 3
+      ? 'bg-amber-50 text-amber-700 border-amber-200'
       : 'bg-emerald-50 text-emerald-700 border-emerald-200';
 
   return (
     <>
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col h-full group relative">
-        {/* Delete Button - Visible on hover/touch */}
-        <button 
-          type="button"
-          onClick={handleDeleteClick}
-          className="absolute top-2 right-2 z-10 p-1.5 bg-white/95 text-slate-400 hover:text-red-500 rounded-full shadow-sm border border-slate-100 hover:border-red-100 transition-all opacity-100 md:opacity-0 group-hover:opacity-100"
-          title="Eliminar material"
-        >
-          <Trash2 size={16} />
-        </button>
+        {/* Action Buttons - Visible on hover/touch */}
+        <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            type="button"
+            onClick={handleEditClick}
+            className="p-1.5 bg-white/95 text-slate-400 hover:text-emerald-600 rounded-full shadow-sm border border-slate-100 hover:border-emerald-100 transition-all"
+            title="Editar material"
+          >
+            <Edit2 size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            className="p-1.5 bg-white/95 text-slate-400 hover:text-red-500 rounded-full shadow-sm border border-slate-100 hover:border-red-100 transition-all"
+            title="Eliminar material"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
 
         <div className="flex p-3 gap-3 flex-1">
-          <div className="w-20 h-20 flex-shrink-0 rounded-lg bg-slate-50 overflow-hidden border border-slate-100 relative group-hover:bg-slate-100 transition-colors">
+          <div
+            onClick={handleEditClick}
+            className="w-20 h-20 flex-shrink-0 rounded-lg bg-slate-50 overflow-hidden border border-slate-100 relative group-hover:bg-slate-100 transition-colors cursor-pointer"
+          >
             {material.imageUrl ? (
               <img src={material.imageUrl} alt={material.name} className="w-full h-full object-cover" />
             ) : (
@@ -73,18 +93,38 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
           </div>
 
           <div className="flex-1 min-w-0 flex flex-col justify-between">
-            <div className="space-y-1">
-              <h3 className="font-bold text-slate-800 text-sm leading-tight truncate pr-6" title={material.name}>
+            <div className="space-y-1.5">
+              <h3
+                onClick={handleEditClick}
+                className="font-bold text-slate-800 text-sm leading-tight truncate pr-10 cursor-pointer hover:text-emerald-700 transition-colors"
+                title={material.name}
+              >
                 {material.name}
               </h3>
-              {material.description && (
-                <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{material.description}</p>
-              )}
-              
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold bg-slate-50 self-start px-2 py-0.5 rounded border border-slate-100 max-w-full">
-                <MapPin size={10} className="text-emerald-600 flex-shrink-0" />
-                <span className="truncate uppercase tracking-wider">{material.location}</span>
+
+              <div className="flex flex-wrap gap-1.5">
+                {/* Categoría Badge - Útil en vista de ubicación */}
+                <div
+                  onClick={handleEditClick}
+                  className="flex items-center gap-1 text-[9px] text-slate-400 font-bold bg-slate-50 px-2 py-0.5 rounded border border-slate-100 cursor-pointer hover:bg-slate-100"
+                >
+                  <Tag size={9} className="text-slate-400" />
+                  <span className="uppercase tracking-wider">{material.type}</span>
+                </div>
+
+                {/* Ubicación Badge */}
+                <div
+                  onClick={handleEditClick}
+                  className="flex items-center gap-1 text-[9px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 cursor-pointer hover:bg-emerald-100 transition-colors"
+                >
+                  <MapPin size={9} className="text-emerald-500 flex-shrink-0" />
+                  <span className="truncate uppercase tracking-wider">{material.location}</span>
+                </div>
               </div>
+
+              {material.description && (
+                <p className="text-[11px] text-slate-500 line-clamp-1 leading-tight">{material.description}</p>
+              )}
             </div>
           </div>
         </div>
@@ -92,9 +132,9 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
         <div className="bg-slate-50 border-t border-slate-100 p-3 mt-auto">
           {isEditingAmount ? (
             <form onSubmit={handleCustomUpdate} className="flex items-center gap-2">
-              <input 
+              <input
                 autoFocus
-                type="number" 
+                type="number"
                 step="any"
                 className="w-full text-sm px-2 py-1 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                 placeholder="0"
@@ -105,9 +145,9 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
                 <button type="submit" className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
                   <Check size={16} />
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setIsEditingAmount(false)} 
+                <button
+                  type="button"
+                  onClick={() => setIsEditingAmount(false)}
                   className="p-1.5 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   <X size={16} />
@@ -116,7 +156,7 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
             </form>
           ) : (
             <div className="flex items-center justify-between">
-              <div 
+              <div
                 onClick={() => {
                   setCustomAmount(material.quantity.toString());
                   setIsEditingAmount(true);
@@ -129,13 +169,13 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
               </div>
 
               <div className="flex items-center gap-1.5">
-                <button 
+                <button
                   onClick={handleUse}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all active:scale-95 shadow-sm"
                 >
                   <Minus size={12} />
                 </button>
-                <button 
+                <button
                   onClick={handleAdd}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all active:scale-95 shadow-sm"
                 >
@@ -146,8 +186,8 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
           )}
         </div>
       </div>
-      
-      <ConfirmModal 
+
+      <ConfirmModal
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleConfirmDelete}
@@ -155,6 +195,12 @@ export const MaterialCard: React.FC<Props> = ({ material }) => {
         message={`¿Estás seguro de que deseas eliminar permanentemente "${material.name}"?`}
         confirmText="Eliminar"
         isDestructive={true}
+      />
+
+      <EditMaterialModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        material={material}
       />
     </>
   );

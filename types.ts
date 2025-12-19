@@ -1,8 +1,8 @@
 
 export interface Material {
   id: string;
-  type: string; 
-  name: string; 
+  type: string;
+  name: string;
   description?: string;
   location: string;
   quantity: number;
@@ -32,6 +32,7 @@ export interface InventoryContextType {
   categories: string[];
   isLoading: boolean;
   addMaterial: (material: Omit<Material, 'id' | 'lastUpdated'>) => void;
+  updateMaterial: (id: string, updates: Partial<Omit<Material, 'id' | 'lastUpdated'>>) => void;
   updateQuantity: (id: string, newQuantity: number) => void;
   incrementQuantity: (id: string) => void;
   decrementQuantity: (id: string) => void;
