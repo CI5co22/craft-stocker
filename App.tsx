@@ -16,10 +16,14 @@ const Dashboard: React.FC = () => {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [dragOverGroup, setDragOverGroup] = useState<string | null>(null);
+  
+  // Inicializamos por defecto en modo claro (false) a menos que exista una preferencia guardada
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' || 
-        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const savedTheme = localStorage.getItem('theme');
+      // Si el usuario ya eligió "dark" anteriormente, lo respetamos.
+      // Si no hay nada guardado, forzamos modo claro ignorando el sistema.
+      return savedTheme === 'dark';
     }
     return false;
   });
