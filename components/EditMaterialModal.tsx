@@ -1,8 +1,8 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useInventory } from './InventoryContext';
-import { X, Save, Upload, Loader2, Tag, MapPin } from 'lucide-react';
+import { X, Save, Upload, Loader2, MapPin, ChevronRight, Check } from 'lucide-react';
 import { storageService } from '../services/storage';
 import { Material } from '../types';
 
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }) => {
-  const { updateMaterial, materials, categories } = useInventory();
+  const { updateMaterial, materials, categories, locations } = useInventory();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [tempImagePreview, setTempImagePreview] = useState<string>(material.imageUrl || '');
@@ -29,7 +29,18 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
     imageUrl: material.imageUrl || ''
   });
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [parentCategory, setParentCategory] = useState('');
+  const [subCategory, setSubCategory] = useState('');
+
+  const topLevelCategories = useMemo(() => categories.filter(c => !c.includes('/')).sort(), [categories]);
+  
+  const availableSubcategories = useMemo(() => {
+    if (!parentCategory || parentCategory === 'Sin categoría') return [];
+    return categories
+      .filter(c => c.startsWith(`${parentCategory} / `))
+      .map(c => c.split(' / ').pop()!)
+      .sort();
+  }, [parentCategory, categories]);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,22 +54,41 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
         imageUrl: material.imageUrl || ''
       });
       setTempImagePreview(material.imageUrl || '');
+      setShowLocationSuggestions(false); 
+
+      if (!material.type || material.type === '' || material.type === 'Sin categoría') {
+        setParentCategory('');
+        setSubCategory('');
+      } else {
+        const parts = material.type.split(' / ');
+        setParentCategory(parts[0] || '');
+        setSubCategory(parts[1] || '');
+      }
     }
   }, [isOpen, material]);
 
-  const existingLocations = React.useMemo(() => {
-    const rawLocations = materials.map(m => m.location).filter(Boolean);
-    const unique = Array.from(new Set(rawLocations.map(l => l.toLowerCase().trim())));
-    return unique.map(u => rawLocations.find(l => l.toLowerCase().trim() === u)!).sort();
-  }, [materials]);
+  useEffect(() => {
+    const fullType = (parentCategory && parentCategory !== 'Sin categoría') 
+      ? (subCategory ? `${parentCategory} / ${subCategory}` : parentCategory) 
+      : '';
+    setFormData(prev => ({ ...prev, type: fullType }));
+  }, [parentCategory, subCategory]);
 
-  const filteredLocations = React.useMemo(() => {
-    if (!formData.location.trim()) return [];
+  const existingLocations = useMemo(() => {
+    const fromMaterials = materials.map(m => m.location.trim()).filter(Boolean);
+    const combined = Array.from(new Set([...locations, ...fromMaterials]));
+    return combined.sort();
+  }, [materials, locations]);
+
+  const filteredLocations = useMemo(() => {
     const search = formData.location.toLowerCase().trim();
+    if (!search) return existingLocations.slice(0, 5);
     return existingLocations.filter(loc => 
       loc.toLowerCase().includes(search) && loc.toLowerCase() !== search
     );
   }, [existingLocations, formData.location]);
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   if (!isOpen) return null;
 
@@ -72,12 +102,13 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
   };
 
   const handleSelectLocation = (loc: string) => {
-    setFormData({ ...formData, location: loc });
+    setFormData(prev => ({ ...prev, location: loc }));
     setShowLocationSuggestions(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploading) return;
     setIsUploading(true);
 
     try {
@@ -102,7 +133,7 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white">Editar Material</h2>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-wider">Actualizar Karoo</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 dark:text-slate-400">
             <X size={20} />
           </button>
@@ -112,55 +143,64 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
           <div className="flex gap-4 items-start">
             <div 
               onClick={() => !isUploading && fileInputRef.current?.click()}
-              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 dark:bg-slate-800 text-slate-400 overflow-hidden relative group"
+              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 flex flex-col items-center justify-center cursor-pointer bg-slate-50 dark:bg-slate-800 text-slate-400 overflow-hidden relative group"
             >
               {tempImagePreview ? (
-                <img src={tempImagePreview} className="w-full h-full object-cover" alt="Vista previa" />
+                <img src={tempImagePreview} className="w-full h-full object-cover" alt="Preview" />
               ) : (
-                <>
-                  <Upload size={20} className="mb-1" />
-                  <span className="text-[10px] font-medium uppercase text-center px-1">Subir Foto</span>
-                </>
+                <Upload size={20} />
               )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-white text-[10px] font-bold uppercase">Cambiar</span>
-              </div>
             </div>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} disabled={isUploading} />
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} />
             
             <div className="flex-1 space-y-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Nombre del Material</label>
-                <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Nombre</label>
+                <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} disabled={isUploading} />
               </div>
+
               <div className="flex flex-col gap-1">
-                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Categoría Actual</label>
-                <div className="relative">
-                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Categoría</label>
+                <div className="flex gap-2">
                   <select 
-                    className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none appearance-none" 
-                    value={formData.type} 
-                    onChange={e => setFormData({...formData, type: e.target.value})} 
+                    className="flex-1 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none cursor-pointer focus:ring-2 focus:ring-emerald-500" 
+                    value={parentCategory} 
+                    onChange={e => { setParentCategory(e.target.value); setSubCategory(''); }}
                     disabled={isUploading}
                   >
-                    {categories.map(t => <option key={t} value={t}>{t}</option>)}
-                    {!categories.includes(formData.type) && <option value={formData.type}>{formData.type}</option>}
+                    <option value="">Sin categoría</option>
+                    {topLevelCategories.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
+                  
+                  {availableSubcategories.length > 0 && (
+                    <>
+                      <div className="flex items-center text-slate-300"><ChevronRight size={14} /></div>
+                      <select 
+                        className="flex-1 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-white outline-none cursor-pointer focus:ring-2 focus:ring-emerald-500" 
+                        value={subCategory} 
+                        onChange={e => setSubCategory(e.target.value)}
+                        disabled={isUploading}
+                      >
+                        <option value="">(Ninguna)</option>
+                        {availableSubcategories.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-50 dark:border-slate-800">
-            <div className="relative">
-              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Ubicación física</label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-500" size={14} />
-                <input 
+          <div className="grid grid-cols-2 gap-4">
+             <div className="relative">
+               <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Ubicación</label>
+               <div className="relative">
+                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                 <input 
                   required 
                   type="text" 
                   autoComplete="off"
-                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" 
+                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500" 
                   value={formData.location} 
                   onChange={e => {
                     setFormData({...formData, location: e.target.value});
@@ -170,50 +210,38 @@ export const EditMaterialModal: React.FC<Props> = ({ isOpen, onClose, material }
                   onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                   disabled={isUploading} 
                 />
-              </div>
-
-              {showLocationSuggestions && filteredLocations.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-2 border-b border-slate-50 dark:border-slate-700 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3">Existentes</div>
+               </div>
+               {showLocationSuggestions && filteredLocations.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
                   {filteredLocations.map((loc, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleSelectLocation(loc)}
-                      className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors flex items-center gap-2 group"
+                    <button 
+                      key={i} 
+                      type="button" 
+                      onClick={() => handleSelectLocation(loc)} 
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors flex items-center justify-between group"
                     >
-                      <MapPin size={12} className="text-slate-300 dark:text-slate-600 group-hover:text-emerald-500" />
                       {loc}
+                      <Check size={12} className="text-emerald-500 opacity-0 group-hover:opacity-100" />
                     </button>
                   ))}
                 </div>
               )}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Cantidad</label>
-                <input required type="number" step="any" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value)})} disabled={isUploading} />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Unidad</label>
-                <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
-              </div>
-            </div>
+             </div>
+             <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Cant.</label>
+                  <input required type="number" step="any" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseFloat(e.target.value) || 0})} disabled={isUploading} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Unidad</label>
+                  <input required type="text" className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} disabled={isUploading} />
+                </div>
+             </div>
           </div>
 
-          <div className="pt-2">
-            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Notas / Descripción</label>
-            <textarea 
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none min-h-[60px]" 
-              value={formData.description} 
-              onChange={e => setFormData({...formData, description: e.target.value})} 
-              disabled={isUploading}
-            />
-          </div>
-
-          <button type="submit" disabled={isUploading} className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-2 transition-all shadow-md active:scale-[0.98]">
+          <button type="submit" disabled={isUploading} className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98]">
             {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-            {isUploading ? 'Guardando cambios...' : 'Confirmar Cambios'}
+            Actualizar Registro
           </button>
         </form>
       </div>

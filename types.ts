@@ -33,6 +33,7 @@ export const DEFAULT_CATEGORIES: string[] = [];
 export interface InventoryContextType {
   materials: Material[];
   categories: string[];
+  locations: string[];
   isLoading: boolean;
   addMaterial: (material: Omit<Material, 'id' | 'lastUpdated'>) => void;
   updateMaterial: (id: string, updates: Partial<Omit<Material, 'id' | 'lastUpdated'>>) => void;
@@ -43,5 +44,7 @@ export interface InventoryContextType {
   addCategory: (name: string) => void;
   updateCategoryName: (oldName: string, newName: string) => void;
   deleteCategory: (name: string) => void;
+  addLocation: (name: string) => void;
+  deleteLocation: (name: string) => void;
   refreshData: () => Promise<void>;
 }

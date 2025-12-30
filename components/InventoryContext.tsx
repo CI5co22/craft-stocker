@@ -8,14 +8,16 @@ const InventoryContext = createContext<InventoryContextType | undefined>(undefin
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshData = useCallback(async () => {
     setIsLoading(true);
-    const { materials: loadedMaterials, categories: loadedCategories } = await storageService.loadData();
+    const { materials: loadedMaterials, categories: loadedCategories, locations: loadedLocations } = await storageService.loadData();
     
     if (loadedMaterials !== null) setMaterials(loadedMaterials);
     if (loadedCategories !== null) setCategories(loadedCategories);
+    if (loadedLocations !== null) setLocations(loadedLocations);
     
     setIsLoading(false);
   }, []);
@@ -36,12 +38,29 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [categories, isLoading]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      storageService.saveLocations(locations);
+    }
+  }, [locations, isLoading]);
+
   const generateId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
       return crypto.randomUUID();
     }
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
+
+  const addLocation = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setLocations(prev => {
+      if (!prev.some(l => l.toLowerCase() === trimmed.toLowerCase())) {
+        return [...prev, trimmed].sort();
+      }
+      return prev;
+    });
+  }, []);
 
   const addMaterial = useCallback((material: Omit<Material, 'id' | 'lastUpdated'>) => {
     const newMaterial: Material = {
@@ -50,13 +69,15 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       lastUpdated: Date.now(),
     };
     setMaterials(prev => [newMaterial, ...prev]);
-  }, []);
+    if (material.location) addLocation(material.location);
+  }, [addLocation]);
 
   const updateMaterial = useCallback((id: string, updates: Partial<Omit<Material, 'id' | 'lastUpdated'>>) => {
     setMaterials(prev => prev.map(m => 
       m.id === id ? { ...m, ...updates, lastUpdated: Date.now() } : m
     ));
-  }, []);
+    if (updates.location) addLocation(updates.location);
+  }, [addLocation]);
 
   const updateQuantity = useCallback((id: string, newQuantity: number) => {
     setMaterials(prev => prev.map(m => 
@@ -92,7 +113,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const updateCategoryName = useCallback((oldName: string, newName: string) => {
     if (!newName.trim() || oldName === newName) return;
     
-    // 1. Actualizar la lista de categorías (incluyendo subcategorías afectadas)
     setCategories(prev => prev.map(cat => {
       if (cat === oldName) return newName;
       if (cat.startsWith(`${oldName} / `)) {
@@ -101,7 +121,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       return cat;
     }));
 
-    // 2. Actualizar los materiales asociados (incluyendo subcategorías afectadas)
     setMaterials(prev => prev.map(m => {
       if (m.type === oldName) {
         return { ...m, type: newName, lastUpdated: Date.now() };
@@ -117,10 +136,15 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     setCategories(prev => prev.filter(c => c !== name && !c.startsWith(`${name} / `)));
   }, []);
 
+  const deleteLocation = useCallback((name: string) => {
+    setLocations(prev => prev.filter(l => l !== name));
+  }, []);
+
   return (
     <InventoryContext.Provider value={{ 
       materials, 
       categories,
+      locations,
       isLoading,
       addMaterial, 
       updateMaterial,
@@ -131,6 +155,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       addCategory,
       updateCategoryName,
       deleteCategory,
+      addLocation,
+      deleteLocation,
       refreshData
     }}>
       {children}

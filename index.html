@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es" class="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <title>Craft Stocker</title>
+    <title>Karoo | Smart Inventory</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -12,124 +12,116 @@
         theme: {
           extend: {
             colors: {
-              craft: {
-                50: '#ecfdf5',
-                100: '#d1fae5',
-                200: '#a7f3d0',
-                300: '#6ee7b7',
-                400: '#34d399',
-                500: '#10b981',
-                600: '#059669',
-                700: '#047857',
-                800: '#065f46',
-                900: '#064e3b',
+              accent: {
+                DEFAULT: '#10b981',
+                hover: '#059669',
+                soft: 'rgba(16, 185, 129, 0.1)',
+              },
+              surface: {
+                light: '#ffffff',
+                dark: '#0f172a',
               }
             },
             fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+              sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
             },
-            keyframes: {
-              'fade-in-up': {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' }
-              },
-              'scale-in': {
-                '0%': { opacity: '0', transform: 'scale(0.95)' },
-                '100%': { opacity: '1', transform: 'scale(1)' }
-              }
+            borderRadius: {
+              'xl': '1rem',
+              '2xl': '1.5rem',
+              '3xl': '2rem',
             },
-            animation: {
-              'fade-in-up': 'fade-in-up 0.3s ease-out forwards',
-              'scale-in': 'scale-in 0.2s ease-out forwards',
+            boxShadow: {
+              'fluent': '0 8px 30px rgba(0,0,0,0.04)',
+              'fluent-dark': '0 8px 30px rgba(0,0,0,0.2)',
+              'glass': 'inset 0 0 0 1px rgba(255,255,255,0.1)',
             }
           }
         }
       }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-      /* Transición suave para el cambio de tema */
+      :root {
+        --transition-speed: 0.25s;
+        --ease-fluent: cubic-bezier(0.33, 1, 0.68, 1);
+      }
+
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+
       * {
-        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        transition: background-color var(--transition-speed) var(--ease-fluent), 
+                    border-color var(--transition-speed) var(--ease-fluent), 
+                    transform var(--transition-speed) var(--ease-fluent),
+                    opacity var(--transition-speed) var(--ease-fluent),
+                    box-shadow var(--transition-speed) var(--ease-fluent);
       }
 
-      .group-content-enter {
-        max-height: 0;
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+
+      .dark .glass-card {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .stagger-in > * {
         opacity: 0;
-        overflow: hidden;
-        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
-      }
-      
-      .group-content-expanded {
-        max-height: 60vh;
-        opacity: 1;
-        overflow-y: auto !important;
-        scrollbar-width: thin;
-        scrollbar-color: #10b981 #f8fafc;
+        transform: translateY(20px);
+        animation: slideIn 0.4s var(--ease-fluent) forwards;
       }
 
-      @media (min-width: 768px) {
-        .group-content-expanded {
-          max-height: 550px;
-        }
+      @keyframes slideIn {
+        to { opacity: 1; transform: translateY(0); }
       }
 
-      .group-content-expanded::-webkit-scrollbar {
-        width: 6px;
-      }
-      .group-content-expanded::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .group-content-expanded::-webkit-scrollbar-thumb {
-        background-color: #d1fae5;
-        border-radius: 20px;
+      .stagger-in > *:nth-child(1) { animation-delay: 0.05s; }
+      .stagger-in > *:nth-child(2) { animation-delay: 0.1s; }
+      .stagger-in > *:nth-child(3) { animation-delay: 0.15s; }
+      .stagger-in > *:nth-child(4) { animation-delay: 0.2s; }
+
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.1);
+        border-radius: 10px;
         border: 2px solid transparent;
+        background-clip: content-box;
       }
-      .group-content-expanded:hover::-webkit-scrollbar-thumb {
-        background-color: #10b981;
-      }
+      .dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
       
-      .dark .group-content-expanded::-webkit-scrollbar-thumb {
-        background-color: #064e3b;
-      }
-      
-      @media screen and (-webkit-min-device-pixel-ratio: 0) {
-        select:focus,
-        textarea:focus,
-        input:focus {
-          font-size: 16px !important;
-        }
-      }
-      
-      input, select, textarea {
-        font-size: 16px !important;
-      }
-      
-      @media (min-width: 768px) {
-        input, select, textarea {
-          font-size: 0.875rem !important;
-        }
+      .view-toggle-active {
+        background: #10b981;
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
-    "@vercel/blob": "https://aistudiocdn.com/@vercel/blob@^2.0.0",
-    "@vercel/kv": "https://aistudiocdn.com/@vercel/kv@^3.0.0",
-    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.14",
-    "ioredis": "https://esm.sh/ioredis@^5.8.2",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+        "@vercel/blob": "https://aistudiocdn.com/@vercel/blob@^2.0.0",
+        "@vercel/kv": "https://aistudiocdn.com/@vercel/kv@^3.0.0",
+        "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.5.14",
+        "ioredis": "https://esm.sh/ioredis@^5.8.2",
+        "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-slate-50 dark:bg-slate-950">
+  <body class="bg-slate-50 dark:bg-slate-950 selection:bg-emerald-100 selection:text-emerald-900">
     <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>

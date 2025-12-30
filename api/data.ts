@@ -1,3 +1,4 @@
+
 import Redis from "ioredis";
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
@@ -6,7 +7,6 @@ export const config = { runtime: 'nodejs' };
 const redis = new Redis(process.env.REDIS_URL!);
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
-  // En producción, si Redis no está configurado, devolvemos un estado limpio pero con error 500 para informar
   if (!process.env.REDIS_URL) {
     return response.status(500).json({ 
       error: 'STORAGE_NOT_CONFIGURED', 
@@ -16,21 +16,24 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
   try {
     if (request.method === 'GET') {
-      const [materials, categories] = await Promise.all([
+      const [materials, categories, locations] = await Promise.all([
         redis.get('materials'),
-        redis.get('categories')
+        redis.get('categories'),
+        redis.get('locations')
       ]);
       
       return response.status(200).json({ 
         materials: materials ? JSON.parse(materials) : [], 
-        categories: categories ? JSON.parse(categories) : [] 
+        categories: categories ? JSON.parse(categories) : [],
+        locations: locations ? JSON.parse(locations) : []
       });
     }
 
     if (request.method === 'POST') {
-      const { materials, categories } = request.body;
+      const { materials, categories, locations } = request.body;
       if (materials !== undefined) await redis.set('materials', JSON.stringify(materials));
       if (categories !== undefined) await redis.set('categories', JSON.stringify(categories));
+      if (locations !== undefined) await redis.set('locations', JSON.stringify(locations));
       return response.status(200).json({ success: true });
     }
 

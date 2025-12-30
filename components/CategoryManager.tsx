@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useInventory } from './InventoryContext';
 import { X, Plus, Trash2, Tag, Tags, Edit2, Check, FolderTree, ChevronDown } from 'lucide-react';
@@ -21,6 +21,14 @@ export const CategoryManager: React.FC<Props> = ({ isOpen, onClose }) => {
   const [newSubValue, setNewSubValue] = useState('');
   
   const [expandedInManager, setExpandedInManager] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!isOpen) {
+      setExpandedInManager({});
+      setAddingSubTo(null);
+      setEditingCategory(null);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -79,49 +87,51 @@ export const CategoryManager: React.FC<Props> = ({ isOpen, onClose }) => {
   const topLevel = categories.filter(c => !c.includes('/')).sort();
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-          <div className="flex items-center gap-2">
-            <Tag size={18} className="text-emerald-600 dark:text-emerald-500" />
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Gestionar Categorías</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm transition-opacity">
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-slate-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+        <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600">
+              <Tag size={20} />
+            </div>
+            <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">Categorías</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 dark:text-slate-400">
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-all text-slate-500 dark:text-slate-400">
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-5 flex-1 overflow-y-auto max-h-[70vh] space-y-6">
+        <div className="p-6 flex-1 overflow-y-auto max-h-[70vh] space-y-6">
             <form onSubmit={handleAdd} className="flex gap-2">
                 <input 
                     type="text" 
                     placeholder="Nueva categoría principal..." 
-                    className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white shadow-sm"
+                    className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800 dark:text-white shadow-sm"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
                 />
                 <button 
                     type="submit"
                     disabled={!newCategory.trim()}
-                    className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white p-2.5 rounded-xl transition-all shadow-md active:scale-90"
+                    className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white p-3 rounded-2xl transition-all shadow-md active:scale-90"
                 >
-                    <Plus size={22} />
+                    <Plus size={24} />
                 </button>
             </form>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
                 {topLevel.length > 0 ? topLevel.map((cat) => {
                     const subCats = categories.filter(c => c.startsWith(`${cat} / `)).sort();
                     const isExpanded = !!expandedInManager[cat];
 
                     return (
                     <div key={cat} className="space-y-2">
-                        <div className={`group flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border transition-all ${editingCategory === cat ? 'border-emerald-500 ring-2 ring-emerald-100 dark:ring-emerald-900/50' : 'border-slate-100 dark:border-slate-700 hover:border-emerald-200 dark:hover:border-emerald-900'}`}>
+                        <div className={`group flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800 rounded-2xl border transition-all duration-200 ${editingCategory === cat ? 'border-emerald-500 ring-2 ring-emerald-100 dark:ring-emerald-900/50' : 'border-slate-100 dark:border-slate-700 hover:border-emerald-200 dark:hover:border-emerald-900'}`}>
                             {editingCategory === cat ? (
-                                <div className="flex-1 flex items-center gap-1">
+                                <div className="flex-1 flex items-center gap-2">
                                     <input 
                                         autoFocus
-                                        className="flex-1 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
+                                        className="flex-1 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-lg px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                                         value={editValue}
                                         onChange={(e) => setEditValue(e.target.value)}
                                         onKeyDown={(e) => {
@@ -129,94 +139,101 @@ export const CategoryManager: React.FC<Props> = ({ isOpen, onClose }) => {
                                             if (e.key === 'Escape') setEditingCategory(null);
                                         }}
                                     />
-                                    <button onClick={() => handleUpdate(cat)} className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"><Check size={16} /></button>
-                                    <button onClick={() => setEditingCategory(null)} className="p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"><X size={16} /></button>
+                                    <div className="flex gap-1">
+                                      <button onClick={() => handleUpdate(cat)} className="p-2 text-emerald-600 bg-white dark:bg-slate-900 rounded-lg"><Check size={16} /></button>
+                                      <button onClick={() => setEditingCategory(null)} className="p-2 text-slate-400 bg-white dark:bg-slate-900 rounded-lg"><X size={16} /></button>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
-                                    <div className="flex items-center gap-2 flex-1 min-w-0" onClick={() => subCats.length > 0 && toggleExpand(cat)}>
-                                        <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'} ${subCats.length === 0 ? 'opacity-0' : 'cursor-pointer'}`}>
-                                          <ChevronDown size={14} className="text-slate-400" />
+                                    <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => subCats.length > 0 && toggleExpand(cat)}>
+                                        <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-emerald-500' : 'rotate-0'} ${subCats.length === 0 ? 'opacity-0' : ''}`}>
+                                          <ChevronDown size={14} />
                                         </div>
-                                        <Tags size={14} className="text-emerald-500" />
-                                        <span className="font-bold text-slate-700 dark:text-slate-200 text-sm truncate">{cat}</span>
-                                        {subCats.length > 0 && !isExpanded && (
-                                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">({subCats.length})</span>
-                                        )}
+                                        <Tags size={16} className={`${isExpanded ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                        <span className={`font-bold text-sm truncate ${isExpanded ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'}`}>{cat}</span>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-1">
                                         <button 
                                           onClick={() => { setAddingSubTo(cat); setNewSubValue(''); }} 
-                                          className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" 
+                                          className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-xl transition-colors" 
                                           title="Añadir subcategoría"
                                         >
-                                          <Plus size={16} />
+                                          <Plus size={18} />
                                         </button>
-                                        <button onClick={() => startEditing(cat)} className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors shadow-sm"><Edit2 size={14} /></button>
-                                        <button onClick={() => handleDeleteClick(cat)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors shadow-sm"><Trash2 size={14} /></button>
+                                        <button onClick={() => startEditing(cat)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-all"><Edit2 size={16} /></button>
+                                        <button onClick={() => handleDeleteClick(cat)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-all"><Trash2 size={16} /></button>
                                     </div>
                                 </>
                             )}
                         </div>
 
-                        {(isExpanded || addingSubTo === cat) && (
-                          <div className="ml-6 space-y-1.5 border-l-2 border-slate-100 dark:border-slate-800 pl-4 animate-scale-in">
-                              {addingSubTo === cat && (
-                                <div className="flex items-center gap-1 p-1 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-300 dark:border-emerald-800 rounded-lg mb-2">
-                                  <input 
-                                    autoFocus
-                                    className="flex-1 bg-white dark:bg-slate-900 border-none text-[11px] px-2 py-1 outline-none rounded dark:text-white"
-                                    placeholder="Nombre subcategoría..."
-                                    value={newSubValue}
-                                    onChange={e => setNewSubValue(e.target.value)}
-                                    onKeyDown={e => {
-                                      if (e.key === 'Enter') confirmAddSub(cat);
-                                      if (e.key === 'Escape') setAddingSubTo(null);
-                                    }}
-                                  />
-                                  <button onClick={() => confirmAddSub(cat)} className="text-emerald-600 dark:text-emerald-400 p-1 hover:bg-white dark:hover:bg-slate-800 rounded"><Check size={14} /></button>
-                                  <button onClick={() => setAddingSubTo(null)} className="text-slate-400 p-1 hover:bg-white dark:hover:bg-slate-800 rounded"><X size={14} /></button>
-                                </div>
-                              )}
-
-                              {subCats.map(sub => (
-                                  <div key={sub} className={`group flex items-center justify-between p-2 bg-white dark:bg-slate-800 rounded-lg border transition-all ${editingCategory === sub ? 'border-emerald-500' : 'border-slate-50 dark:border-slate-800 hover:border-emerald-100 dark:hover:border-emerald-900'}`}>
-                                      {editingCategory === sub ? (
-                                          <div className="flex-1 flex items-center gap-1">
-                                              <input 
-                                                  autoFocus
-                                                  className="flex-1 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 text-[11px] outline-none dark:text-white"
-                                                  value={editValue}
-                                                  onChange={(e) => setEditValue(e.target.value)}
-                                                  onKeyDown={(e) => {
-                                                      if (e.key === 'Enter') handleUpdate(sub);
-                                                      if (e.key === 'Escape') setEditingCategory(null);
-                                                  }}
-                                              />
-                                              <button onClick={() => handleUpdate(sub)} className="p-1 text-emerald-600 dark:text-emerald-400"><Check size={14} /></button>
-                                              <button onClick={() => setEditingCategory(null)} className="p-1 text-slate-400"><X size={14} /></button>
-                                          </div>
-                                      ) : (
-                                          <>
-                                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                  <FolderTree size={12} className="text-emerald-400" />
-                                                  <span className="text-slate-500 dark:text-slate-400 font-medium text-xs truncate italic">{sub.split(' / ').pop()}</span>
-                                              </div>
-                                              <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                  <button onClick={() => startEditing(sub)} className="p-1 text-slate-400 hover:text-emerald-600"><Edit2 size={12} /></button>
-                                                  <button onClick={() => handleDeleteClick(sub)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 size={12} /></button>
-                                              </div>
-                                          </>
-                                      )}
+                        <div className={`grid transition-all duration-200 ease-in-out ${isExpanded || addingSubTo === cat ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                          <div className="overflow-hidden">
+                            <div className="ml-7 space-y-1.5 border-l-2 border-slate-100 dark:border-slate-800 pl-4 py-2">
+                                {addingSubTo === cat && (
+                                  <div className="flex items-center gap-2 p-1.5 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 rounded-xl mb-3 animate-in zoom-in-95">
+                                    <input 
+                                      autoFocus
+                                      className="flex-1 bg-white dark:bg-slate-900 border-none text-[11px] px-3 py-2 outline-none rounded-lg dark:text-white"
+                                      placeholder="Nombre subcategoría..."
+                                      value={newSubValue}
+                                      onChange={e => setNewSubValue(e.target.value)}
+                                      onKeyDown={e => {
+                                        if (e.key === 'Enter') confirmAddSub(cat);
+                                        if (e.key === 'Escape') setAddingSubTo(null);
+                                      }}
+                                    />
+                                    <div className="flex gap-1 pr-1">
+                                      <button onClick={() => confirmAddSub(cat)} className="text-emerald-600 bg-white dark:bg-slate-900 p-2 rounded-lg shadow-sm"><Check size={14} /></button>
+                                      <button onClick={() => setAddingSubTo(null)} className="text-slate-400 bg-white dark:bg-slate-900 p-2 rounded-lg shadow-sm"><X size={14} /></button>
+                                    </div>
                                   </div>
-                              ))}
+                                )}
+
+                                {subCats.map(sub => (
+                                    <div key={sub} className={`group flex items-center justify-between p-2.5 bg-white dark:bg-slate-800/50 rounded-xl border transition-all duration-200 ${editingCategory === sub ? 'border-emerald-500 shadow-md' : 'border-slate-50 dark:border-slate-800 hover:border-emerald-100 dark:hover:border-emerald-900'}`}>
+                                        {editingCategory === sub ? (
+                                            <div className="flex-1 flex items-center gap-2">
+                                                <input 
+                                                    autoFocus
+                                                    className="flex-1 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-lg px-2 py-1.5 text-[11px] outline-none dark:text-white"
+                                                    value={editValue}
+                                                    onChange={(e) => setEditValue(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleUpdate(sub);
+                                                        if (e.key === 'Escape') setEditingCategory(null);
+                                                    }}
+                                                />
+                                                <div className="flex gap-1">
+                                                  <button onClick={() => handleUpdate(sub)} className="p-1.5 text-emerald-600 bg-white dark:bg-slate-900 rounded-md"><Check size={14} /></button>
+                                                  <button onClick={() => setEditingCategory(null)} className="p-1.5 text-slate-400 bg-white dark:bg-slate-900 rounded-md"><X size={14} /></button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <FolderTree size={12} className="text-emerald-400" />
+                                                    <span className="text-slate-500 dark:text-slate-400 font-bold text-xs truncate italic">{sub.split(' / ').pop()}</span>
+                                                </div>
+                                                <div className="flex items-center gap-0.5 opacity-100">
+                                                    <button onClick={() => startEditing(sub)} className="p-1.5 text-slate-400 hover:text-emerald-600 transition-colors"><Edit2 size={12} /></button>
+                                                    <button onClick={() => handleDeleteClick(sub)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                           </div>
-                        )}
+                        </div>
                     </div>
                 )}) : (
-                    <div className="py-10 text-center text-slate-400">
-                        <Tags size={32} className="mx-auto mb-2 opacity-20" />
-                        <p className="text-xs">No hay categorías creadas.</p>
+                    <div className="py-16 text-center space-y-4">
+                        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
+                          <Tags size={32} className="text-slate-200 dark:text-slate-700" />
+                        </div>
+                        <p className="text-sm text-slate-400 font-medium italic">No hay categorías configuradas.</p>
                     </div>
                 )}
             </div>
@@ -227,9 +244,9 @@ export const CategoryManager: React.FC<Props> = ({ isOpen, onClose }) => {
         isOpen={!!categoryToDelete}
         onClose={() => setCategoryToDelete(null)}
         onConfirm={confirmDelete}
-        title="Eliminar Categoría"
-        message={`¿Estás seguro de que quieres eliminar "${categoryToDelete}"? Si es una categoría principal, se eliminarán también todas sus subcategorías. Los materiales se mantendrán pero perderán su categoría.`}
-        confirmText="Eliminar"
+        title="Eliminar"
+        message={`¿Borrar "${categoryToDelete}"? Se eliminarán también sus subcategorías. Los materiales perderán su categoría pero no se borrarán.`}
+        confirmText="Eliminar Todo"
         isDestructive={true}
       />
     </div>,
